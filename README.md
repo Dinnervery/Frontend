@@ -1,4 +1,4 @@
-# Daebak's Dinnervery
+# Daebak's Dinnervery 🍷
 
 > **고객 맞춤형으로 고급 디너를 제공하는 음성 지원 배달 서비스**  
 
