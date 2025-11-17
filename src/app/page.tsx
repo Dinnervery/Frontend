@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import styled from "@emotion/styled";
-import { Global, css } from "@emotion/react";
+import { useRouter } from "next/navigation";
 
 const Text = styled.p`
   position: absolute;
@@ -77,33 +77,36 @@ const BgShape = styled(Image)`
   height: auto !important;
 `;
 
+const OrderWrap = styled.div`
+  position: absolute;
+  bottom: 60px;  
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 30;
+`;
+
+const OrderText = styled.p`
+  color: #A17454;
+  font-family: 'SOYO', sans-serif;
+  font-size: 20px;
+  margin: 0 0 15px 0;
+`;
+
+const ScrollIcon = styled(Image)`
+  width: 40px;
+  height: auto;
+  display: inline-block;
+`;
+
 export default function Home() {
+  const router = useRouter();
+  const handleOrderClick = () => {
+    router.push("/login");
+  };
+
   return (
     <Page>
-      <Global
-        styles={css`
-          @font-face {
-            font-family: 'SOYO';
-            src: url('/SOYO_Regular.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-          }
-          // 라이트/다크모드
-          :root {
-            color-scheme: light dark;
-          }
-          html, body {
-            margin: 0;
-            padding: 0;
-          }
-          body {
-            font-family: 'SOYO', sans-serif;
-          }
-          // 링크에 사용
-          // a { color: inherit; text-decoration: underline; }
-        `}
-      />
-
       <BgWrap aria-hidden>
         <Image src="/Bg_image.png" alt="" fill priority />
       </BgWrap>
@@ -135,6 +138,17 @@ export default function Home() {
           priority
         />
       </BgShapeWrap>
+
+      <OrderWrap onClick={handleOrderClick} style={{ cursor: "pointer" }}>
+        <OrderText>주문하기</OrderText>
+        <ScrollIcon
+          src="/Scroll.svg"
+          alt="scroll"
+          width={40}
+          height={40}
+          priority
+        />
+      </OrderWrap>
     </Page>
   );
 }
