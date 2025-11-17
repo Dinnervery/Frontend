@@ -34,13 +34,6 @@ const LeftArea = styled.div`
     gap: 20px;
 
     color: #FDF5E6;
-
-    a {
-        cursor: pointer;
-        text-decoration: none;
-        color: #FDF5E6; 
-        font-size: 18px;
-    }
 `;
 
 const TabWrap = styled.div`
@@ -76,7 +69,7 @@ const RightContent = styled.div`
 const Form = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 50px;
+    gap: 25px;
 `;
 
 const Field = styled.div`
@@ -92,7 +85,8 @@ const Input = styled.input`
     border: none;
     border-bottom: 1px solid #8c6543;
     background: transparent;
-    padding: 15px 0;
+    padding: 10px 0;
+    margin: 0 0 10px 0;
     font-size: 16px;
     font-family: "SOYO", sans-serif;
     outline: none;
@@ -101,10 +95,9 @@ const Input = styled.input`
 const ButtonRow = styled.div`
     display: flex;
     justify-content: flex-end;
-    margin-top: 8px;
 `;
 
-const LoginButton = styled.button<{ isDisabled: boolean }>`
+const NextButton = styled.button<{ isDisabled: boolean }>`
     border: none;
     border-radius: 10px;
     padding: 12px 40px;
@@ -112,7 +105,7 @@ const LoginButton = styled.button<{ isDisabled: boolean }>`
     font-family: "SOYO", sans-serif;
 
     background-color: #ffbfbe;
-    color: #3F2316;
+    color: #3f2316;
 
     cursor: ${({ isDisabled }) => (isDisabled ? "not-allowed" : "pointer")};
     opacity: ${({ isDisabled }) => (isDisabled ? 0.3 : 1)};
@@ -120,9 +113,25 @@ const LoginButton = styled.button<{ isDisabled: boolean }>`
 
 export default function LoginPage() {
     const [selected, setSelected] = useState<"login" | "signup">("login");
-    const [id, setId] = useState("");
-    const [password, setPassword] = useState("");
-    const isLoginDisabled = !id.trim() || !password.trim();
+    
+    // 로그인 폼 상태
+    const [loginId, setLoginId] = useState("");
+    const [loginPassword, setLoginPassword] = useState("");
+
+    // 회원가입 폼 상태
+    const [signupId, setSignupId] = useState("");
+    const [signupPassword, setSignupPassword] = useState("");
+    const [signupName, setSignupName] = useState("");
+    const [signupPhone, setSignupPhone] = useState("");
+    const [signupAddress, setSignupAddress] = useState("");
+
+    const isLoginDisabled = !loginId.trim() || !loginPassword.trim();
+    const isSignupDisabled =
+        !signupId.trim() ||
+        !signupPassword.trim() ||
+        !signupName.trim() ||
+        !signupPhone.trim() ||
+        !signupAddress.trim();
 
     return (
         <Page>
@@ -179,8 +188,8 @@ export default function LoginPage() {
                             <Label htmlFor="login-id">ID</Label>
                             <Input
                                 id="login-id"
-                                value={id}
-                                onChange={(e) => setId(e.target.value)}
+                                value={loginId}
+                                onChange={(e) => setLoginId(e.target.value)}
                             />
                             </Field>
 
@@ -189,26 +198,82 @@ export default function LoginPage() {
                             <Input
                                 id="login-password"
                                 type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                value={loginPassword}
+                                onChange={(e) => setLoginPassword(e.target.value)}
                             />
                             </Field>
 
                             <ButtonRow>
-                            <LoginButton
-                                type="button"
-                                disabled={isLoginDisabled}
-                                isDisabled={isLoginDisabled}
-                            >
-                                로그인
-                            </LoginButton>
+                                <NextButton
+                                    type="button"
+                                    disabled={isLoginDisabled}
+                                    isDisabled={isLoginDisabled}
+                                >
+                                    로그인
+                                </NextButton>
                             </ButtonRow>
                         </Form>
                         )}
 
-                        {selected === "signup" && (
-                        <div>회원가입 폼</div>
-                        )}
+                {selected === "signup" && (
+                    <Form>
+                        <Field>
+                            <Label htmlFor="signup-id">ID</Label>
+                            <Input
+                                id="signup-id"
+                                value={signupId}
+                                onChange={(e) => setSignupId(e.target.value)}
+                            />
+                        </Field>
+
+                        <Field>
+                            <Label htmlFor="signup-password">Password</Label>
+                            <Input
+                                id="signup-password"
+                                type="password"
+                                value={signupPassword}
+                                onChange={(e) => setSignupPassword(e.target.value)}
+                            />
+                        </Field>
+
+                        <Field>
+                            <Label htmlFor="signup-name">이름</Label>
+                            <Input
+                                id="signup-name"
+                                value={signupName}
+                                onChange={(e) => setSignupName(e.target.value)}
+                            />
+                        </Field>
+
+                        <Field>
+                            <Label htmlFor="signup-phone">연락처</Label>
+                            <Input
+                                id="signup-phone"
+                                value={signupPhone}
+                                onChange={(e) => setSignupPhone(e.target.value)}
+                            />
+                        </Field>
+
+                        <Field>
+                            <Label htmlFor="signup-address">주소</Label>
+                            <Input
+                                id="signup-address"
+                                value={signupAddress}
+                                onChange={(e) => setSignupAddress(e.target.value)}
+                            />
+                        </Field>
+
+                        <ButtonRow>
+                            <NextButton
+                                type="button"
+                                disabled={isSignupDisabled}
+                                isDisabled={isSignupDisabled}
+                            >
+                                회원가입
+                            </NextButton>
+                        </ButtonRow>
+                    </Form>
+                )}
             </RightContent>
         </Page>
     );
