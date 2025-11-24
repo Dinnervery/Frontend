@@ -3,6 +3,7 @@
 import Image from "next/image";
 import styled from "@emotion/styled";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const Page = styled.div`
     position: relative;
@@ -12,7 +13,7 @@ const Page = styled.div`
     background-color: #FDF5E6;
 `;
 
-const BgShape2Wrap = styled.div`
+const BgShape = styled.div`
     // 여백 없애기
     position: fixed;   
     inset: 0;
@@ -112,6 +113,8 @@ const NextButton = styled.button<{ isDisabled: boolean }>`
 `;
 
 export default function LoginPage() {
+    const router = useRouter();
+
     const [selected, setSelected] = useState<"login" | "signup">("login");
     
     // 로그인 폼 상태
@@ -133,12 +136,32 @@ export default function LoginPage() {
         !signupPhone.trim() ||
         !signupAddress.trim();
 
+    // 로그인 버튼 → Dinner 페이지 이동
+    const handleLoginClick = () => {
+        if (isLoginDisabled) {
+        alert("ID와 Password를 모두 입력해주세요.");
+        return;
+        }
+        router.push("/dinner");
+    };
+
+    // 회원가입 버튼 → 로그인 탭으로 전환
+    const handleSignupClick = () => {
+        if (isSignupDisabled) {
+        alert("모든 정보가 필요합니다.");
+        return;
+        }
+
+        alert("회원가입이 완료되었습니다.");
+        setSelected("login"); 
+    };
+
     return (
         <Page>
-            <BgShape2Wrap>
+            <BgShape>
                 <Image
                     src="/Bg_shape_2.svg"
-                    alt="bg_shape_2"
+                    alt="bg shape 2"
                     width={0}
                     height={0}
                     priority
@@ -151,7 +174,7 @@ export default function LoginPage() {
                         display: "block" 
                     }}
                 />
-            </BgShape2Wrap>
+            </BgShape>
 
             <LeftArea>
                 <Image
@@ -206,6 +229,7 @@ export default function LoginPage() {
                             <ButtonRow>
                                 <NextButton
                                     type="button"
+                                    onClick={handleLoginClick}
                                     disabled={isLoginDisabled}
                                     isDisabled={isLoginDisabled}
                                 >
@@ -266,6 +290,7 @@ export default function LoginPage() {
                         <ButtonRow>
                             <NextButton
                                 type="button"
+                                onClick={handleSignupClick}
                                 disabled={isSignupDisabled}
                                 isDisabled={isSignupDisabled}
                             >
