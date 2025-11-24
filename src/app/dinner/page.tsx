@@ -3,6 +3,7 @@
 import styled from "@emotion/styled";
 import Link from "next/link";
 import { Inter } from "next/font/google";
+import { useState } from "react";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -16,12 +17,20 @@ const Page = styled.div`
     background: linear-gradient(287.56deg, #FDF5E6 0%, #FFFFFF 100%);
 `;
 
-const BgShape = styled.img`
+const ShapeArea = styled.div`
     position: absolute;
-    top: 0;
+    top: -15%;
     right: 0;
-    width: 70%; 
-    pointer-events: none; 
+    width: 70%;
+    height: 100%;
+    background-color: #3F2316;
+
+    -webkit-mask-image: url("/Bg_shape_3.svg");
+    mask-image: url("/Bg_shape_3.svg");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
 `;
 
 const Logo = styled.img`
@@ -40,10 +49,12 @@ const MenuWrapper = styled.div`
     gap: 50px;
 `;
 
-const MenuButton = styled(Link)<{ active?: boolean }>`
+const MenuButton = styled(Link, {
+    shouldForwardProp: (prop) => prop !== '$active'
+})<{ $active?: boolean }>`
     cursor: pointer;
     color: white;
-    opacity: ${(props) => (props.active ? 1.0 : 0.6)};
+    opacity: ${(props) => (props.$active ? 1.0 : 0.6)};
 
     &:hover {
         opacity: 1.0;
@@ -132,19 +143,117 @@ const LogoutButton = styled.button`
     }  
 
     font-family: ${inter.style.fontFamily};
-    font-size: 1.2rem;
+    font-size: 1.rem;
     font-weight: 700;
 `;
 
+const Ellipse = styled.div`
+    position: absolute;
+    top: 50%;
+    right: 15%;
+    width: 450px;
+    height: 300px;
+    border-radius: 999px;
+
+    background: transparent;
+
+    border: 3px dashed rgba(255, 255, 255, 0.5);
+`;
+
+const EllipseInner = styled.div`
+    position: relative;
+    width: 100%;
+    height: 100%;
+`;
+
+type PositionType = "top" | "right" | "bottom" | "left";
+
+const Photo = styled.img<{ $positionType: PositionType; $size: number }>`
+    position: absolute;
+    width: ${({ $size }) => $size}px;
+    height: auto;
+    transition: all 2s ease;
+    cursor: pointer;
+
+    ${({ $positionType }) =>
+        $positionType === "top" &&
+        `
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.05);
+        z-index: 3;
+    `}
+
+    ${({ $positionType }) =>
+        $positionType === "right" &&
+        `
+        top: 60%;
+        right: -5%;
+        transform: translate(50%, -50%);
+        z-index: 2;
+    `}
+
+    ${({ $positionType }) =>
+        $positionType === "bottom" &&
+        `
+        bottom: -10%;
+        left: 50%;
+        transform: translate(-50%, 50%);
+        z-index: 1;
+    `}
+
+    ${({ $positionType }) =>
+        $positionType === "left" &&
+        `
+        top: 60%;
+        left: -5%;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+    `}
+`;
+
+const photos = [
+    { src: "/C-dinner.png", alt: "c dinner", size: 250 },
+    { src: "/E-dinner.png", alt: "e dinner", size: 200 },
+    { src: "/F-dinner.png", alt: "f dinner", size: 320 },
+    { src: "/V-dinner.png", alt: "v dinner", size: 270 },
+];
+
 export default function DinnerPage() {
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    const positionOrder: PositionType[] = ["top", "right", "bottom", "left"];
+
     return (
         <Page>
-            <BgShape src="/Bg_shape_3.svg" alt="bg shape 3" />
+            <ShapeArea>
+                <Ellipse>
+                    <EllipseInner>
+                        {photos.map((photo, index) => {
+                            const relativeIndex = (index - activeIndex + photos.length) % photos.length;
+                            const positionType = positionOrder[relativeIndex];
+
+                            return (
+                                <Photo
+                                    key={photo.src}
+                                    src={photo.src}
+                                    alt={photo.alt}
+                                    $positionType={positionType}
+                                    $size={photo.size}
+                                    onClick={() => {
+                                        if (index !== activeIndex) setActiveIndex(index);
+                                    }}
+                                />
+                            );
+                        })}
+                    </EllipseInner>
+                </Ellipse>
+            </ShapeArea>
             <Logo src="/Logo-brown.svg" alt="logo" />
             <LogoutButton>로그아웃</LogoutButton>
 
             <MenuWrapper>
-                <MenuButton href="/dinner" active={true}>Dinner</MenuButton>
+                <MenuButton href="/dinner" $active={true}>Dinner</MenuButton>
                 <MenuButton href="/option">Option</MenuButton>
                 <MenuButton href="/style">Style</MenuButton>
                 <MenuButton href="/information">Information</MenuButton>
