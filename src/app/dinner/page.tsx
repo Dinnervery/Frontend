@@ -6,12 +6,13 @@ import { Inter } from "next/font/google";
 
 const inter = Inter({
     subsets: ["latin"],
-    weight: ["700", "800", "900"],
+    weight: ["300", "400", "500", "600", "700"],
 });
 
 const Page = styled.div`
     position: relative; 
     min-height: 100vh;
+
     background: linear-gradient(287.56deg, #FDF5E6 0%, #FFFFFF 100%);
 `;
 
@@ -40,17 +41,99 @@ const MenuWrapper = styled.div`
 `;
 
 const MenuButton = styled(Link)<{ active?: boolean }>`
-    font-size: 1.7rem;
-    font-weight: 700;
-    text-decoration: none;
     cursor: pointer;
-    font-family: ${inter.style.fontFamily};
     color: white;
     opacity: ${(props) => (props.active ? 1.0 : 0.6)};
 
     &:hover {
         opacity: 1.0;
     }
+
+    font-family: ${inter.style.fontFamily};
+    font-size: 1.7rem;
+    font-weight: 700;
+    text-decoration: none;
+`;
+
+const Card = styled.div`
+    position: absolute;
+    top: 35%;
+    left: 5%;
+    display: flex;
+    flex-direction: column;
+    width: 170px;
+
+    color: #4b3525;
+
+    font-family: ${inter.style.fontFamily};
+`;
+
+const Price = styled.div`
+    margin-bottom: 5px;
+
+    color: #B54450;   
+
+    font-size: 1.2rem;
+    font-weight: 400;
+`;
+
+const Title = styled.div`
+    margin-bottom: 10px;
+
+    font-size: 1.7rem;
+    font-weight: 700;
+`;
+
+const Desc = styled.div`
+    margin-bottom: 10px;
+    white-space: pre-line;
+
+    color: black;
+
+    font-size: 1.2rem;
+    font-weight: 400;
+`;
+
+const SelectButton = styled(Link)`
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    padding: 15px 0;
+
+    cursor: pointer;
+    border: none;
+    border-radius: 30px;
+    background: #6B4426;
+    color: white;
+
+    &:hover {
+        opacity: 0.9;
+    }
+
+    font-size: 1.2rem;
+    font-weight: 400;
+    font-family: ${inter.style.fontFamily};
+`;
+
+const LogoutButton = styled.button`
+    position: absolute;
+    top: 4%;
+    right: 4%;
+
+    background: none;
+    border: none;
+    padding: 0;
+
+    color: white; 
+    cursor: pointer;
+
+    &:hover {
+        opacity: 0.9;
+    }  
+
+    font-family: ${inter.style.fontFamily};
+    font-size: 1.2rem;
+    font-weight: 700;
 `;
 
 export default function DinnerPage() {
@@ -58,6 +141,7 @@ export default function DinnerPage() {
         <Page>
             <BgShape src="/Bg_shape_3.svg" alt="bg shape 3" />
             <Logo src="/Logo-brown.svg" alt="logo" />
+            <LogoutButton>로그아웃</LogoutButton>
 
             <MenuWrapper>
                 <MenuButton href="/dinner" active={true}>Dinner</MenuButton>
@@ -65,6 +149,13 @@ export default function DinnerPage() {
                 <MenuButton href="/style">Style</MenuButton>
                 <MenuButton href="/information">Information</MenuButton>
             </MenuWrapper>
+
+            <Card>
+                <Price>가격</Price>
+                <Title>디너</Title>
+                <Desc>설명</Desc>
+                <SelectButton href="/option">디너 선택</SelectButton>
+            </Card>
         </Page>
     );
 }
