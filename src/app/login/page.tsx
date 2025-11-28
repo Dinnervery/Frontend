@@ -4,6 +4,12 @@ import Image from "next/image";
 import styled from "@emotion/styled";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Inter } from "next/font/google";
+
+const inter = Inter({
+    subsets: ["latin"],
+    weight: ["300", "400", "500", "600", "700"],
+});
 
 const Page = styled.div`
     position: relative;
@@ -103,7 +109,7 @@ const NextButton = styled.button<{ isDisabled: boolean }>`
     border-radius: 10px;
     padding: 12px 40px;
     font-size: 16px;
-    font-family: "SOYO", sans-serif;
+    font-family: ${inter.style.fontFamily};
 
     background-color: #ffbfbe;
     color: #3f2316;

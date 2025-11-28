@@ -39,14 +39,16 @@ const MenuWrapper = styled.div`
     gap: 50px;
 `;
 
-const MenuButton = styled(Link)<{ active?: boolean }>`
+const MenuButton = styled(Link, {
+    shouldForwardProp: (prop) => prop !== "$active",   
+})<{ $active?: boolean }>`
     font-size: 1.7rem;
     font-weight: 700;
     text-decoration: none;
     cursor: pointer;
     font-family: ${inter.style.fontFamily};
     color: white;
-    opacity: ${(props) => (props.active ? 1.0 : 0.6)};
+    opacity: ${(props) => (props.$active ? 1.0 : 0.6)};
 
     &:hover {
         opacity: 1.0;
@@ -63,7 +65,7 @@ export default function InformationPage() {
                 <MenuButton href="/dinner" >Dinner</MenuButton>
                 <MenuButton href="/option">Option</MenuButton>
                 <MenuButton href="/style">Style</MenuButton>
-                <MenuButton href="/information" active={true}>Information</MenuButton>
+                <MenuButton href="/information" $active={true}>Information</MenuButton>
             </MenuWrapper>
         </Page>
     );

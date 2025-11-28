@@ -4,6 +4,7 @@ import styled from "@emotion/styled";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -105,7 +106,7 @@ const Desc = styled.div`
     font-weight: 400;
 `;
 
-const SelectButton = styled(Link)`
+const SelectButton = styled.button`
     display: block;
     text-align: center;
     margin-top: 10px;
@@ -139,11 +140,11 @@ const LogoutButton = styled.button`
     cursor: pointer;
 
     &:hover {
-        opacity: 0.9;
+        opacity: 0.5;
     }  
 
     font-family: ${inter.style.fontFamily};
-    font-size: 1.rem;
+    font-size: 1.2rem;
     font-weight: 700;
 `;
 
@@ -213,16 +214,22 @@ const Photo = styled.img<{ $positionType: PositionType; $size: number }>`
 `;
 
 const photos = [
-    { src: "/C-dinner.png", alt: "c dinner", size: 250 },
-    { src: "/E-dinner.png", alt: "e dinner", size: 200 },
-    { src: "/F-dinner.png", alt: "f dinner", size: 320 },
-    { src: "/V-dinner.png", alt: "v dinner", size: 270 },
+    { id: "cham", src: "/D-cham.png", alt: "D-cham", size: 250 },
+    { id: "eng", src: "/D-eng.png", alt: "D-eng", size: 200},
+    { id: "fren", src: "/D-fren.png", alt: "D-fren", size: 320},
+    { id: "valen", src: "D-valen.png", alt: "D-valen", size: 260},
 ];
 
 export default function DinnerPage() {
     const [activeIndex, setActiveIndex] = useState(0);
+    const router = useRouter();
 
     const positionOrder: PositionType[] = ["top", "right", "bottom", "left"];
+
+    const handleSelectDinner = () => {
+        const selectedDinner = photos[activeIndex];
+        router.push(`/option?dinner=${selectedDinner.id}`);
+    }
 
     return (
         <Page>
@@ -249,8 +256,11 @@ export default function DinnerPage() {
                     </EllipseInner>
                 </Ellipse>
             </ShapeArea>
+
             <Logo src="/Logo-brown.svg" alt="logo" />
-            <LogoutButton>로그아웃</LogoutButton>
+            <LogoutButton onClick={()=>router.push("/login")}>
+                로그아웃
+            </LogoutButton>
 
             <MenuWrapper>
                 <MenuButton href="/dinner" $active={true}>Dinner</MenuButton>
@@ -263,7 +273,9 @@ export default function DinnerPage() {
                 <Price>가격</Price>
                 <Title>디너</Title>
                 <Desc>설명</Desc>
-                <SelectButton href="/option">디너 선택</SelectButton>
+                <SelectButton type="button" onClick={handleSelectDinner}>
+                    디너 선택
+                </SelectButton>
             </Card>
         </Page>
     );
