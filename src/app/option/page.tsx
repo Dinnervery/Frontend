@@ -3,6 +3,7 @@
 import styled from "@emotion/styled";
 import Link from "next/link";
 import { Inter } from "next/font/google";
+import { useSearchParams } from "next/navigation";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -70,9 +71,46 @@ const OptionBox = styled.div`
     background: white;
     border-radius: 20px;
     box-shadow: 3px 3px 20px 0px rgba(0, 0, 0, 0.15);
-`
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+`;
+
+type DinnerId = "valen" | "eng" | "fren" | "cham";
+type OptionImg = { src: string; alt: string };
+
+const optionImagesByDinner: Record<DinnerId, OptionImg[]> = {
+    valen: [
+        { src: "/O-steak.png", alt: "steak"},
+        { src: "/O-wine.png", alt: "wine"},
+    ],
+    eng: [
+        { src: "/O-bacon.png", alt: "bacon"},
+        { src: "/O-bread.png", alt: "bread"},
+        { src: "/O-egg.png", alt: "egg"},
+        { src: "/O-steak.png", alt: "steak"},
+    ],
+    fren: [
+        { src: "/O-coffee.png", alt: "coffee"},
+        { src: "/O-salad.png", alt: "salad"},
+        { src: "/O-steak.png", alt: "steak"},
+        { src: "/O-wine.png", alt: "wine"},
+    ],
+    cham: [
+        { src: "/O-bread.png", alt: "bread"},
+        { src: "/O-champ.png", alt: "champ"},
+        { src: "/O-coffee.png", alt: "coffee"},
+        { src: "/O-steak.png", alt: "steak"},
+        { src: "/O-wine.png", alt: "wine"},
+    ],
+};
 
 export default function OptionPage() {
+    const searchParams = useSearchParams();
+    const dinner = (searchParams.get("dinner") ?? "") as DinnerId;
+    const images = optionImagesByDinner[dinner] ?? [];
+
     return (
         <Page>
             <BgShape src="/Bg_shape_3.svg" alt="bg shape 3" />
@@ -86,8 +124,15 @@ export default function OptionPage() {
             </MenuWrapper>
 
             <BoxContainer>
-                <OptionBox />
-                <OptionBox />
+                {images.map((img, idx) => (
+                    <OptionBox key={`${img.src}-${idx}`}>
+                        <img
+                            src={img.src}
+                            alt={img.alt}
+                            style={{ width: "80% "}}
+                        />
+                    </OptionBox>
+                ))}
             </BoxContainer>
         </Page>
     );
