@@ -217,7 +217,7 @@ const photos = [
     { id: "cham", src: "/D-cham.png", alt: "D-cham", size: 250 },
     { id: "eng", src: "/D-eng.png", alt: "D-eng", size: 200},
     { id: "fren", src: "/D-fren.png", alt: "D-fren", size: 320},
-    { id: "valen", src: "D-valen.png", alt: "D-valen", size: 260},
+    { id: "valen", src: "/D-valen.png", alt: "D-valen", size: 260},
 ];
 
 export default function DinnerPage() {
