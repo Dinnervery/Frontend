@@ -60,6 +60,27 @@ const MenuButton = styled(Link, {
     pointer-events: ${(p) => (p.$disabled ? "none" : "auto")};
 `;
 
+const LogoutButton = styled.button`
+    position: absolute;
+    top: 4%;
+    right: 4%;
+
+    background: none;
+    border: none;
+    padding: 0;
+
+    color: white;
+    cursor: pointer;
+
+    &:hover{
+        opacity: 0.5;
+    }
+
+    font-family: ${inter.style.fontFamily};
+    font-size: 1.2rem;
+    font-weight: 700;
+`;
+
 const BoxContainer = styled.div`
     position: absolute;
     top: 50%;
@@ -235,6 +256,10 @@ export default function OptionPage() {
         <Page>
             <BgShape src="/Bg_shape_3.svg" alt="bg shape 3" />
             <Logo src="/Logo-brown.svg" alt="logo" />
+
+            <LogoutButton onClick={() => router.push("login")}>
+                로그아웃
+            </LogoutButton>
 
             <MenuWrapper>
                 <MenuButton href="/dinner" >Dinner</MenuButton>

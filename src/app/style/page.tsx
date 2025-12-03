@@ -3,6 +3,7 @@
 import styled from "@emotion/styled";
 import Link from "next/link";
 import { Inter } from "next/font/google";
+import { useRouter } from "next/navigation";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -53,6 +54,27 @@ const MenuButton = styled(Link, {
     &:hover {
         opacity: 1.0;
     }
+`;
+
+const LogoutButton = styled.button`
+    position: absolute;
+    top: 4%;
+    right: 4%;
+
+    background: none;
+    border: none;
+    padding: 0;
+
+    color: white; 
+    cursor: pointer;
+
+    &:hover {
+        opacity: 0.5;
+    }  
+
+    font-family: ${inter.style.fontFamily};
+    font-size: 1.2rem;
+    font-weight: 700;
 `;
 
 const Card = styled.div`
@@ -115,10 +137,16 @@ const SelectButton = styled.button`
 `;
 
 export default function StylePage() {
+    const router = useRouter();
+
     return (
         <Page>
             <BgShape src="/Bg_shape_3.svg" alt="bg shape 3" />
             <Logo src="/Logo-brown.svg" alt="logo" />
+
+            <LogoutButton onClick={() => router.push("/login")}>
+                로그아웃
+            </LogoutButton>
 
             <MenuWrapper>
                 <MenuButton href="/dinner">Dinner</MenuButton>
