@@ -132,6 +132,12 @@ const QtyButton = styled.button`
     &:active {
         transform: translateY(1px);
     }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+    }
 `;
 
 const QtyValue = styled.div`
@@ -237,9 +243,9 @@ export default function OptionPage() {
                             <OptionPrice>₩{item.price.toLocaleString("ko-KR")}</OptionPrice>
 
                             <QtyRow>
-                                <QtyButton onClick={() => dec(item.id)}>-</QtyButton>
+                                <QtyButton disabled={isSelected} onClick={() => dec(item.id)}>-</QtyButton>
                                 <QtyValue>{qty(item.id)}</QtyValue>
-                                <QtyButton onClick={() => inc(item.id)}>+</QtyButton>
+                                <QtyButton disabled={isSelected} onClick={() => inc(item.id)}>+</QtyButton>
                             </QtyRow>
 
                             <SelectButton $selected={isSelected} onClick={() => onSelectClick(item.id)}>{isSelected ? "취소" : "선택"}</SelectButton>
