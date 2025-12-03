@@ -4,6 +4,7 @@ import styled from "@emotion/styled";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -14,14 +15,6 @@ const Page = styled.div`
     position: relative; 
     min-height: 100vh;
     background: linear-gradient(287.56deg, #FDF5E6 0%, #FFFFFF 100%);
-`;
-
-const BgShape = styled.img`
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 70%; 
-    pointer-events: none; 
 `;
 
 const Logo = styled.img`
@@ -41,19 +34,21 @@ const MenuWrapper = styled.div`
 `;
 
 const MenuButton = styled(Link, {
-    shouldForwardProp: (prop) => prop !== "$active",   
-})<{ $active?: boolean }>`
+    shouldForwardProp: (prop) => prop !== "$active" && prop !== "$disabled",   
+})<{ $active?: boolean; $disabled?: boolean }>`
+    cursor: ${(p) => (p.$disabled ? "default" : "pointer")};
+    color: white;
+    opacity: ${(props) => (props.$active ? 1.0 : 0.6)};
+    pointer-events: ${(p) => (p.$disabled ? "none" : "auto")};
+
+    &:hover {
+        opacity: ${(p) => (p.$disabled ? 0.6 : 1.0)};
+    }
+
     font-size: 1.7rem;
     font-weight: 700;
     text-decoration: none;
-    cursor: pointer;
     font-family: ${inter.style.fontFamily};
-    color: white;
-    opacity: ${(props) => (props.$active ? 1.0 : 0.6)};
-
-    &:hover {
-        opacity: 1.0;
-    }
 `;
 
 const LogoutButton = styled.button`
@@ -136,12 +131,108 @@ const SelectButton = styled.button`
     font-family: ${inter.style.fontFamily};
 `;
 
+const ShapeArea = styled.div`
+    position: absolute;
+    top: -15%;
+    right: 0;
+    width: 70%;
+    height: 100%;
+    background-color: #3F2316;
+
+    -webkit-mask-image: url("/Bg_shape_3.svg");
+    mask-image: url("/Bg_shape_3.svg");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+`;
+
+const Ellipse = styled.div`
+    position: absolute;
+    top: 50%;
+    right: 15%;
+    width: 450px;
+    height: 300px;
+    border-radius: 999px;
+    border: 3px dashed rgba(255, 255, 255, 0.5);
+`;
+
+const EllipseInner = styled.div`
+    position: relative;
+    width: 100%;
+    height: 100%;
+`;
+
+type PositionType = "top" | "left" | "right";
+
+const Photo = styled.img<{ $positionType: PositionType; $size: number }>`
+    position: absolute;
+    width: ${({ $size }) => $size}px;
+    height: auto;
+    transition: all 2s ease;
+    cursor: pointer;
+
+    ${({ $positionType }) =>
+        $positionType === "top" &&
+        `
+        top: -20%;
+        left: 50%;
+        transform: translate(-50%, -30%) scale(1.05);
+        z-index: 3;
+    `}
+    ${({ $positionType }) =>
+        $positionType === "left" &&
+        `
+        top: 60%;
+        left: -5%;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+    `}
+    ${({ $positionType }) =>
+        $positionType === "right" &&
+        `
+        top: 60%;
+        right: -5%;
+        transform: translate(50%, -50%);
+        z-index: 2;
+    `}
+`;
+
+const stylePhotos = [
+    { id: "simple", src: "/S-simple.png", alt: "simple", size: 220 },
+    { id: "delux", src: "/S-delux.png", alt: "delux", size: 240 },
+    { id: "grand", src: "/S-grand.png", alt: "grand", size: 240 },
+];
+
 export default function StylePage() {
     const router = useRouter();
+    const [activeIndex, setActiveIndex] = useState(0);
+    const positionOrder: PositionType[] = ["top", "right", "left"];
 
     return (
         <Page>
-            <BgShape src="/Bg_shape_3.svg" alt="bg shape 3" />
+            <ShapeArea>
+                <Ellipse>
+                    <EllipseInner>
+                        {stylePhotos.map((photo, index) => {
+                            const relativeIndex = (index - activeIndex + stylePhotos.length) % stylePhotos.length;
+                            const positionType = positionOrder[relativeIndex];
+
+                            return (
+                                <Photo
+                                    key={photo.id}
+                                    src={photo.src}
+                                    alt={photo.alt}
+                                    $positionType={positionType}
+                                    $size={photo.size}
+                                    onClick={() => index !== activeIndex && setActiveIndex(index)}
+                                />
+                            );
+                        })}
+                    </EllipseInner>
+                </Ellipse>
+            </ShapeArea>
+
             <Logo src="/Logo-brown.svg" alt="logo" />
 
             <LogoutButton onClick={() => router.push("/login")}>
@@ -152,7 +243,7 @@ export default function StylePage() {
                 <MenuButton href="/dinner">Dinner</MenuButton>
                 <MenuButton href="/option">Option</MenuButton>
                 <MenuButton href="/style" $active={true}>Style</MenuButton>
-                <MenuButton href="/information">Information</MenuButton>
+                <MenuButton href="#" $disabled={true}>Information</MenuButton>
             </MenuWrapper>
 
             <Card>
