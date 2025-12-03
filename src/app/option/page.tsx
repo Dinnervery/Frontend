@@ -42,19 +42,21 @@ const MenuWrapper = styled.div`
 `;
 
 const MenuButton = styled(Link, {
-    shouldForwardProp: (prop) => prop !== "$active",  
-})<{ $active?: boolean }>`
+    shouldForwardProp: (prop) => prop !== "$active" && prop !== "$disabled",  
+})<{ $active?: boolean; $disabled?: boolean }>`
     font-size: 1.7rem;
     font-weight: 700;
     text-decoration: none;
-    cursor: pointer;
+    cursor: ${(p) => (p.$disabled ? "default" : "pointer")};
     font-family: ${inter.style.fontFamily};
     color: white;
     opacity: ${(props) => (props.$active ? 1.0 : 0.6)};
 
     &:hover {
-        opacity: 1.0;
+        opacity: ${(p) => (p.$disabled ? 0.6 : 1.0)};
     }
+
+    pointer-events: ${(p) => (p.$disabled ? "none" : "auto")};
 `;
 
 const BoxContainer = styled.div`
@@ -227,8 +229,8 @@ export default function OptionPage() {
             <MenuWrapper>
                 <MenuButton href="/dinner" >Dinner</MenuButton>
                 <MenuButton href="/option" $active={true}>Option</MenuButton>
-                <MenuButton href="/style">Style</MenuButton>
-                <MenuButton href="/information">Information</MenuButton>
+                <MenuButton href="#" $disabled={true}>Style</MenuButton>
+                <MenuButton href="#" $disabled={true}>Information</MenuButton>
             </MenuWrapper>
 
             <BoxContainer>
