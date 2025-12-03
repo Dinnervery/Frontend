@@ -55,6 +55,65 @@ const MenuButton = styled(Link, {
     }
 `;
 
+const Card = styled.div`
+    position: absolute;
+    top: 35%;
+    left: 5%;
+    display: flex;
+    flex-direction: column;
+    width: 170px;
+
+    color: #4b3525;
+    font-family: ${inter.style.fontFamily};
+`;
+
+const Price = styled.div`
+    margin-bottom: 5px;
+
+    color: #B54450;   
+
+    font-size: 1.2rem;
+    font-weight: 700;
+`;
+
+const Title = styled.div`
+    margin-bottom: 10px;
+
+    font-size: 1.7rem;
+    font-weight: 700;
+`;
+
+const Desc = styled.div`
+    margin-bottom: 10px;
+    white-space: pre-line;
+
+    color: black;
+
+    font-size: 1.2rem;
+    font-weight: 400;
+`;
+
+const SelectButton = styled.button`
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    padding: 15px 0;
+
+    cursor: pointer;
+    border: none;
+    border-radius: 30px;
+    background: #6B4426;
+    color: white;
+
+    &:hover {
+        opacity: 0.9;
+    }
+
+    font-size: 1.2rem;
+    font-weight: 400;
+    font-family: ${inter.style.fontFamily};
+`;
+
 export default function StylePage() {
     return (
         <Page>
@@ -67,6 +126,15 @@ export default function StylePage() {
                 <MenuButton href="/style" $active={true}>Style</MenuButton>
                 <MenuButton href="/information">Information</MenuButton>
             </MenuWrapper>
+
+            <Card>
+                <Price>가격</Price>
+                <Title>스타일</Title>
+                <Desc>설명</Desc>
+                <SelectButton type="button">
+                    스타일 선택
+                </SelectButton>
+            </Card>
         </Page>
     );
 }

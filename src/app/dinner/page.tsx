@@ -88,7 +88,7 @@ const Price = styled.div`
     color: #B54450;   
 
     font-size: 1.2rem;
-    font-weight: 400;
+    font-weight: 700;
 `;
 
 const Title = styled.div`

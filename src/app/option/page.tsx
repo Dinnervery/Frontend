@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Inter } from "next/font/google";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -196,6 +197,7 @@ const optionItemsByDinner: Record<DinnerId, OptionItem[]> = {
 };
 
 export default function OptionPage() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const dinner = (searchParams.get("dinner") ?? "") as DinnerId;
     const items = optionItemsByDinner[dinner] ?? [];
@@ -218,9 +220,17 @@ export default function OptionPage() {
 
     const onSelectClick = (id: string) => {
         setActiveBox(null);
-        setSelectedOption((prev) => ({ ...prev, [id]: !prev[id] }));
-    }
+        setSelectedOption((prev) => {
+            const next = { ...prev, [id]: !prev[id] };
+            const allSelected = items.length > 0 && items.every((item) => next[item.id]);
 
+            if(allSelected){
+                router.push(`/style?dinner=${dinner}`);
+            }
+            return next;
+        });
+    };
+    
     return (
         <Page>
             <BgShape src="/Bg_shape_3.svg" alt="bg shape 3" />
