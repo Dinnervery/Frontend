@@ -244,7 +244,7 @@ export default function CheckoutPage() {
                 <Title>주문 정보</Title>
             </LeftArea>
             <Logo src="/Logo-beige.svg" alt="logo" />
-            <LogoutButton />
+            <LogoutButton color="#3F2316" />
 
             <RightContent>
                 <BackButton

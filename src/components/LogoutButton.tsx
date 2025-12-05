@@ -9,15 +9,16 @@ const inter = Inter({
     weight: ["700"],
 });
 
-const Button = styled.button`
+const Button = styled.button<{ $color?: string }>`
     position: absolute;
     top: 4%;
     right: 4%;
     background: none;
     border: none;
     padding: 0;
-    color: white;
     cursor: pointer;
+
+    color: ${({ $color }) => $color || "white"};
 
     &:hover {
         opacity: 0.6;
@@ -28,8 +29,15 @@ const Button = styled.button`
     font-weight: 700;
 `;
 
-export default function LogoutButton() {
+export default function LogoutButton({ color }: { color?: string }) {
     const router = useRouter();
 
-    return <Button onClick={() => router.push("/login")}>로그아웃</Button>;
+    return (
+        <Button
+            $color={color}
+            onClick={() => router.push("/login")}
+        >
+            로그아웃
+        </Button>
+    );
 }
