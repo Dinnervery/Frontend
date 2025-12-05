@@ -16,6 +16,7 @@ const inter = Inter({
 const Page = styled.div`
     position: relative; 
     min-height: 100vh;
+
     background: linear-gradient(287.56deg, #FDF5E6 0%, #FFFFFF 100%);
 `;
 
@@ -25,6 +26,7 @@ const ShapeArea = styled.div<{ $mask: string }>`
     right: 0;
     width: 1000px;
     height: 100%;
+
     background-color: #3F2316;
 
     -webkit-mask-image: url(${(p) => p.$mask});
@@ -81,14 +83,13 @@ const BoxContainer = styled.div`
 const OptionBox = styled.div<{ $active?: boolean}>`
     width: 230px;
     height: 300px;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 3px 3px 20px 0px rgba(0, 0, 0, 0.15);
-
     display: flex;
     flex-direction: column;
     align-items: center;
 
+    background: white;
+    border-radius: 20px;
+    box-shadow: 3px 3px 20px 0px rgba(0, 0, 0, 0.15);
     border: 3px solid ${(p) => (p.$active ? "#FFBFBE" : "transparent")};
 `;
 
@@ -99,27 +100,26 @@ const OptionImage = styled.img`
 `;
 
 const OptionName = styled.div`
+    margin-top: 10px;
+
+    color: black;
+
     font-family: ${inter.style.fontFamily};
     font-weight: 400;
     font-size: 1.2rem;
-    color: black;
-
-    margin-top: 10px;
 `;
 
 const OptionPrice = styled.div`
+    margin-top: 10px;
+
+    color: #B54450;
+
     font-family: ${inter.style.fontFamily};
     font-weight: 700;
     font-size: 1.05rem;
-    color: #B54450;
-
-    margin-top: 10px;
 `;
 
 const QtyRow = styled.div`
-    border: 1px solid #3F2316;
-    border-radius: 50px;
-
     display: flex;
     align-items: center;
     justify-content: center;
@@ -127,19 +127,23 @@ const QtyRow = styled.div`
     gap: 30px;
     height: 45px;
     width: 80%;
+
+    border: 1px solid #3F2316;
+    border-radius: 50px;
 `;
 
 const QtyButton = styled.button`
+    width: 35px;
+    height: 35px;
+
     border-radius: 50px;
     border: 1px solid white;
     background: #6B4426;
     color: white;
     cursor: pointer;
+
     font-size: 1.5rem;
     font-weight: 400;
-
-    width: 35px;
-    height: 35px;
 
     &:active {
         transform: translateY(1px);
@@ -154,26 +158,29 @@ const QtyButton = styled.button`
 
 const QtyValue = styled.div`
     width: 40px;
+
+    color: #3F2316;
+
     text-align: center;
     font-family: ${inter.style.fontFamily};
     font-weight: 400;
     font-size: 1.0rem;
-    color: #3F2316;
 `;
 
 const SelectButton = styled.button<{ $selected?: boolean }>`
     margin-top: 10px;
     width: 80%;
     height: 35px;
+
     border-radius: 20px;
     border: 0;
     cursor: pointer;
+    background: ${(p) => (p.$selected ? "#FFBFBE" : "#6B4426")};
+    color: ${(p) => (p.$selected ? "#6B4426" : "#FFF")};
+
     font-family: ${inter.style.fontFamily};
     font-weight: 700;
     font-size: 1.05rem;
-
-    background: ${(p) => (p.$selected ? "#FFBFBE" : "#6B4426")};
-    color: ${(p) => (p.$selected ? "#6B4426" : "#FFF")};
 `;
 
 type DinnerId = "valen" | "eng" | "fren" | "cham";

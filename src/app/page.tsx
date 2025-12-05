@@ -12,7 +12,7 @@ const Text = styled.p`
   color: #A17454;
   font-size: 23px;
   font-family: 'SOYO', sans-serif;
-  white-space: pre-line; /* 줄바꿈 유지 */
+  white-space: pre-line;
   z-index: 20;
 `;
 

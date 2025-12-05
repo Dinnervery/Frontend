@@ -9,12 +9,13 @@ import LogoutButton from "@/components/LogoutButton";
 
 const inter = Inter({
     subsets: ["latin"],
-    weight: ["700", "800", "900"],
+    weight: ["700"],
 });
 
 const Page = styled.div`
     position: relative; 
     min-height: 100vh;
+
     background: linear-gradient(287.56deg, #FDF5E6 0%, #FFFFFF 100%);
 `;
 
@@ -32,6 +33,7 @@ const ShapeArea = styled.div<{ $mask: string }>`
     right: 0;
     width: 1000px;
     height: 100%;
+
     background-color: #3F2316;
 
     -webkit-mask-image: url(${(p) => p.$mask});
@@ -77,6 +79,7 @@ const Card = styled.div`
     width: 170px;
 
     color: #4b3525;
+
     font-family: ${inter.style.fontFamily};
 `;
 
@@ -133,6 +136,7 @@ const Ellipse = styled.div`
     right: 15%;
     width: 450px;
     height: 300px;
+    
     border-radius: 999px;
     border: 3px dashed rgba(255, 255, 255, 0.5);
 `;

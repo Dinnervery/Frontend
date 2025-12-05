@@ -9,7 +9,7 @@ import LogoutButton from "@/components/LogoutButton";
 
 const inter = Inter({
     subsets: ["latin"],
-    weight: ["300", "400", "500", "600", "700"],
+    weight: ["400", "700"],
 });
 
 const Page = styled.div`
@@ -25,6 +25,7 @@ const ShapeArea = styled.div<{ $mask: string }>`
     right: 0;
     width: 1000px;
     height: 100%;
+
     background-color: #3F2316;
 
     -webkit-mask-image: url(${(p) => p.$mask});
@@ -136,10 +137,9 @@ const Ellipse = styled.div`
     right: 15%;
     width: 450px;
     height: 300px;
+
     border-radius: 999px;
-
     background: transparent;
-
     border: 3px dashed rgba(255, 255, 255, 0.5);
 `;
 
