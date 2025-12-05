@@ -4,7 +4,7 @@ import styled from "@emotion/styled";
 import { Inter } from "next/font/google";
 import LogoutButton from "@/components/LogoutButton";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -67,7 +67,7 @@ const RightContent = styled.div`
     flex-direction: column;
     gap: 32px;
 
-    color: #6b4426;
+    color: #3F2316;
 `;
 
 const BackButton = styled.img`
@@ -98,7 +98,7 @@ const Label = styled.label`
 
 const Input = styled.input`
     border: none;
-    border-bottom: 1px solid #8c6543;
+    border-bottom: 1px solid #3F2316;
     background: transparent;
     padding: 10px 0;
     margin: 0 0 10px 0;
@@ -114,11 +114,33 @@ const TimeField = styled.div`
     flex-direction: column;
 `;
 
-const TimeArrow = styled.span`
+const TimeSelect = styled.select`
+    padding: 10px 0;
+    margin: 0 0 10px 0;
+
+    outline: none;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid #3F2316;
+    background: transparent;
+    color: rgba(63, 35, 22, 0.2);
+    cursor: pointer;
+
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    font-size: 16px;
+    font-family: "SOYO", sans-serif;
+`;
+
+const TimeArrow = styled.img`
     position: absolute;
     right: 0;
-    bottom: 14px;
-    pointer-events: none;
+    bottom: 20px;
+    width: 18px;
+    height: auto;
+    pointer-events: none; 
 `;
 
 const PayButton = styled.button<{ $disabled?: boolean }>`
@@ -144,6 +166,68 @@ export default function CheckoutPage() {
     const [time, setTime] = useState("");
 
     const isDisabled = !address || !card || !time;
+
+    const [timeOptions, setTimeOptions] = useState<string[]>([]);
+    // const [orderAvailable, setOrderAvailable] = useState(true);
+
+    useEffect(() => {
+        const now = new Date();
+
+        // const start = new Date(now);
+        // start.setHours(15, 30, 0, 0); // 15:30
+
+        // const end = new Date(now);
+        // end.setHours(23, 59, 0, 0); // 22:00
+
+        // // 주문 불가
+        // if (now < start || now >= end) {
+        //     setOrderAvailable(false);
+        //     setTimeOptions([]);
+        //     setTime("");
+        //     return;
+        // }
+
+        // setOrderAvailable(true);
+
+        // 현재 시간 + 30분
+        let first = new Date(now.getTime() + 30 * 60 * 1000);
+
+        // 10분 단위로 올림
+        const minutes = first.getMinutes();
+        const remainder = minutes % 10;
+        if (remainder !== 0) {
+            first.setMinutes(minutes + (10 - remainder), 0, 0);
+        } else {
+            first.setSeconds(0, 0);
+        }
+
+        // 15:30보다 빠르면 15:30부터
+        // if (first < start) first = start;
+
+        const options: string[] = [];
+        let current = first;
+
+        const formatTime = (d: Date) => {
+            const h = d.getHours().toString().padStart(2, "0");
+            const m = d.getMinutes().toString().padStart(2, "0");
+            return `${h}:${m}`;
+        };
+
+        // while (current <= end) {
+        //     options.push(formatTime(current));
+        //     current = new Date(current.getTime() + 10 * 60 * 1000); // 10분씩 증가
+        // }
+
+        for (let i = 0; i < 30; i++) {
+            options.push(formatTime(current));
+            current = new Date(current.getTime() + 10 * 60 * 1000);
+        }
+
+        setTimeOptions(options);
+        setTime(""); // 사용자가 직접 선택
+    }, []);
+
+    const selectRef = useRef<HTMLSelectElement | null>(null);
 
     const handlePayClick = () => {
         if (isDisabled){
@@ -192,13 +276,23 @@ export default function CheckoutPage() {
 
                     <TimeField>
                         <Label htmlFor="time">배달 시간</Label>
-                        <Input
-                            id="time"
-                            value={time}
-                            onChange={(e) => setTime(e.target.value)}
-                            placeholder=""
+                            <TimeSelect
+                                id="time"
+                                ref={selectRef}
+                                value={time}
+                                onChange={(e) => setTime(e.target.value)}
+                            >
+                                <option value="">시간 선택</option>
+                                {timeOptions.map((opt) => (
+                                    <option key={opt} value={opt}>
+                                        {opt}
+                                    </option>
+                                ))}
+                        </TimeSelect>
+
+                        <TimeArrow
+                            src="Dropdown.svg" alt="dropdown"
                         />
-                        <TimeArrow>⌵</TimeArrow>
                     </TimeField>
                 </Form>
 
