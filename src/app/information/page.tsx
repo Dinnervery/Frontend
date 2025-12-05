@@ -67,6 +67,7 @@ const BoxContainer = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 `;
 
 const InfoBox = styled.div`
@@ -86,6 +87,22 @@ const InnerContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
+`;
+
+const AddButton = styled.img`
+    position: absolute;
+    top: 50%;
+    left: 450px; 
+    transform: translateY(-50%);
+
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 10; 
+
+    &:hover {
+        opacity: 0.6;
+    }
 `;
 
 const InfoHeader = styled.div`
@@ -109,12 +126,14 @@ const EditButton = styled.button`
     color: #ffffff;
     cursor: pointer;
 
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 400;
     font-family: ${inter.style.fontFamily};
 
     &:hover {
-        opacity: 0.9;
+        box-shadow: inset 0 0 0 1px #3f2316;
+        background: #FFFFFF;
+        color: #3f2316;
     }
 `;
 
@@ -285,6 +304,12 @@ export default function InformationPage() {
                     </InfoBox>
 
                     <OrderButton>주문하기</OrderButton>
+
+                    <AddButton
+                            src="/I-add.png"
+                            alt="추가"
+                            onClick={() => window.location.href = "/dinner"}
+                    />
                 </InnerContainer>
             </BoxContainer>
         </Page>
