@@ -4,7 +4,7 @@ import styled from "@emotion/styled";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 
@@ -234,19 +234,26 @@ export default function OptionPage() {
         setQtyById((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) - 1) }));
     }
 
+    // 선택 상태 변경
     const onSelectClick = (id: string) => {
         setActiveBox(null);
-        setSelectedOption((prev) => {
-            const next = { ...prev, [id]: !prev[id] };
-            const allSelected = items.length > 0 && items.every((item) => next[item.id]);
-
-            if(allSelected){
-                router.push(`/style?dinner=${dinner}`);
-            }
-            return next;
-        });
+        setSelectedOption((prev) => ({
+            ...prev,
+            [id]: !prev[id],
+        }));
     };
     
+    // 모든 선택이 끝났는지 확인 -> router.push
+    useEffect(() => {
+        if (items.length === 0) return;
+
+        const allSelected = items.every((item) => selectedOption[item.id]);
+
+        if (allSelected) {
+            router.push(`/style?dinner=${dinner}`);
+        }
+    }, [items, selectedOption, router, dinner]);
+
     return (
         <Page>
             <ShapeArea $mask="/Bg_shape_3.svg" />
