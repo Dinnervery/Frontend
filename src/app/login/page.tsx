@@ -145,8 +145,8 @@ export default function LoginPage() {
     // 로그인 버튼 → Dinner 페이지 이동
     const handleLoginClick = () => {
         if (isLoginDisabled) {
-        alert("ID와 Password를 모두 입력해주세요.");
-        return;
+            alert("ID와 Password를 모두 입력해주세요.");
+            return;
         }
         router.push("/dinner");
     };

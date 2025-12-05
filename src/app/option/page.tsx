@@ -51,6 +51,8 @@ const MenuWrapper = styled.div`
     right: 20%;
     display: flex;
     gap: 50px;
+
+    z-index: 999;
 `;
 
 const MenuButton = styled(Link, {

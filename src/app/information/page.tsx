@@ -4,6 +4,7 @@ import styled from "@emotion/styled";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import LogoutButton from "@/components/LogoutButton";
+import { useRouter } from "next/navigation";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -43,6 +44,8 @@ const MenuWrapper = styled.div`
     right: 20%;
     display: flex;
     gap: 50px;
+
+    z-index: 999;
 `;
 
 const MenuButton = styled(Link, {
@@ -98,7 +101,7 @@ const AddButton = styled.img`
     width: 40px;
     height: 40px;
     cursor: pointer;
-    z-index: 10; 
+    z-index: 2; 
 
     &:hover {
         opacity: 0.6;
@@ -221,6 +224,7 @@ const OrderButton = styled.button`
 `;
 
 export default function InformationPage() {
+    const router = useRouter();
     const dinner = { name: "잉글리시", qty: 1, price: 35000 };
     const options = [
         { name: "바게트", qty: 2, price: 3000 },
@@ -253,7 +257,7 @@ export default function InformationPage() {
                     <InfoBox>
                         <InfoHeader>
                             <InfoTitle>주문 내역</InfoTitle>
-                            <EditButton>수정하기</EditButton>
+                            <EditButton onClick={() => router.push("/dinner")}>수정하기</EditButton>
                         </InfoHeader>
                         
                         <Divider />
@@ -303,7 +307,7 @@ export default function InformationPage() {
                         </TotalRow>
                     </InfoBox>
 
-                    <OrderButton>주문하기</OrderButton>
+                    <OrderButton onClick={() => router.push("/checkout")}>주문하기</OrderButton>
 
                     <AddButton
                             src="/I-add.png"
