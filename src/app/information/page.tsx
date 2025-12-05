@@ -3,6 +3,7 @@
 import styled from "@emotion/styled";
 import Link from "next/link";
 import { Inter } from "next/font/google";
+import LogoutButton from "@/components/LogoutButton";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -31,7 +32,7 @@ const Logo = styled.img`
     position: absolute;
     top: 5%;     
     left: 5%;
-    width: 18%;
+    width: 270px;
     height: auto;
 `;
 
@@ -74,6 +75,8 @@ export default function InformationPage() {
         <Page>
             <BgShape src="/Bg_shape_3.svg" alt="bg shape 3" />
             <Logo src="/Logo-brown.svg" alt="logo" />
+
+            <LogoutButton />
 
             <MenuWrapper>
                 <MenuButton href="/dinner" >Dinner</MenuButton>

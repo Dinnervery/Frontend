@@ -31,7 +31,7 @@ const BgShape = styled.div`
 const LeftArea = styled.div`
     position: absolute;
     top: 50%;
-    left: 20vw;           
+    left: 290px;           
     transform: translate(-50%, -50%);
 
     z-index: 2;
@@ -65,7 +65,7 @@ const RightContent = styled.div`
     transform: translateY(-50%);
 
     z-index: 1;
-    width: 28vw;
+    width: 400px;
     display: flex;
     flex-direction: column;
     gap: 32px;

@@ -6,6 +6,7 @@ import { Inter } from "next/font/google";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LogoutButton from "@/components/LogoutButton";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -18,19 +19,27 @@ const Page = styled.div`
     background: linear-gradient(287.56deg, #FDF5E6 0%, #FFFFFF 100%);
 `;
 
-const BgShape = styled.img`
+const ShapeArea = styled.div<{ $mask: string }>`
     position: absolute;
-    top: 0;
+    top: -120px;
     right: 0;
-    width: 70%; 
-    pointer-events: none; 
+    width: 1000px;
+    height: 100%;
+    background-color: #3F2316;
+
+    -webkit-mask-image: url(${(p) => p.$mask});
+    mask-image: url(${(p) => p.$mask});
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
 `;
 
 const Logo = styled.img`
     position: absolute;
     top: 5%;     
     left: 5%;
-    width: 18%;
+    width: 270px;
     height: auto;
 `;
 
@@ -58,27 +67,6 @@ const MenuButton = styled(Link, {
     }
 
     pointer-events: ${(p) => (p.$disabled ? "none" : "auto")};
-`;
-
-const LogoutButton = styled.button`
-    position: absolute;
-    top: 4%;
-    right: 4%;
-
-    background: none;
-    border: none;
-    padding: 0;
-
-    color: white;
-    cursor: pointer;
-
-    &:hover{
-        opacity: 0.5;
-    }
-
-    font-family: ${inter.style.fontFamily};
-    font-size: 1.2rem;
-    font-weight: 700;
 `;
 
 const BoxContainer = styled.div`
@@ -254,12 +242,10 @@ export default function OptionPage() {
     
     return (
         <Page>
-            <BgShape src="/Bg_shape_3.svg" alt="bg shape 3" />
+            <ShapeArea $mask="/Bg_shape_3.svg" />
             <Logo src="/Logo-brown.svg" alt="logo" />
 
-            <LogoutButton onClick={() => router.push("login")}>
-                로그아웃
-            </LogoutButton>
+            <LogoutButton />
 
             <MenuWrapper>
                 <MenuButton href="/dinner" >Dinner</MenuButton>

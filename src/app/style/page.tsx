@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Inter } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import LogoutButton from "@/components/LogoutButton";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -21,8 +22,24 @@ const Logo = styled.img`
     position: absolute;
     top: 5%;     
     left: 5%;
-    width: 18%;
+    width: 270px;
     height: auto;
+`;
+
+const ShapeArea = styled.div<{ $mask: string }>`
+    position: absolute;
+    top: -120px;
+    right: 0;
+    width: 1000px;
+    height: 100%;
+    background-color: #3F2316;
+
+    -webkit-mask-image: url(${(p) => p.$mask});
+    mask-image: url(${(p) => p.$mask});
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
 `;
 
 const MenuWrapper = styled.div`
@@ -49,27 +66,6 @@ const MenuButton = styled(Link, {
     font-weight: 700;
     text-decoration: none;
     font-family: ${inter.style.fontFamily};
-`;
-
-const LogoutButton = styled.button`
-    position: absolute;
-    top: 4%;
-    right: 4%;
-
-    background: none;
-    border: none;
-    padding: 0;
-
-    color: white; 
-    cursor: pointer;
-
-    &:hover {
-        opacity: 0.5;
-    }  
-
-    font-family: ${inter.style.fontFamily};
-    font-size: 1.2rem;
-    font-weight: 700;
 `;
 
 const Card = styled.div`
@@ -129,22 +125,6 @@ const SelectButton = styled.button`
     font-size: 1.2rem;
     font-weight: 400;
     font-family: ${inter.style.fontFamily};
-`;
-
-const ShapeArea = styled.div`
-    position: absolute;
-    top: -15%;
-    right: 0;
-    width: 70%;
-    height: 100%;
-    background-color: #3F2316;
-
-    -webkit-mask-image: url("/Bg_shape_3.svg");
-    mask-image: url("/Bg_shape_3.svg");
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
 `;
 
 const Ellipse = styled.div`
@@ -211,7 +191,7 @@ export default function StylePage() {
 
     return (
         <Page>
-            <ShapeArea>
+            <ShapeArea $mask="/Bg_shape_3.svg">
                 <Ellipse>
                     <EllipseInner>
                         {stylePhotos.map((photo, index) => {
@@ -235,9 +215,7 @@ export default function StylePage() {
 
             <Logo src="/Logo-brown.svg" alt="logo" />
 
-            <LogoutButton onClick={() => router.push("/login")}>
-                로그아웃
-            </LogoutButton>
+            <LogoutButton />
 
             <MenuWrapper>
                 <MenuButton href="/dinner">Dinner</MenuButton>
