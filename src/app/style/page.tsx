@@ -250,7 +250,7 @@ export default function StylePage() {
                 <Price>가격</Price>
                 <Title>스타일</Title>
                 <Desc>설명</Desc>
-                <SelectButton type="button">
+                <SelectButton type="button" onClick={() => router.push("/information")}>
                     스타일 선택
                 </SelectButton>
             </Card>

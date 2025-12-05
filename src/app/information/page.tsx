@@ -13,6 +13,10 @@ const Page = styled.div`
     position: relative; 
     min-height: 100vh;
     background: linear-gradient(287.56deg, #FDF5E6 0%, #FFFFFF 100%);
+    
+    display: flex;
+    justify-content: center;  
+    align-items: center;
 `;
 
 const BgShape = styled.img`
@@ -55,6 +59,16 @@ const MenuButton = styled(Link, {
     }
 `;
 
+const InfoBox = styled.div`
+    position: absolute;
+    width: 30%;
+    height: 60%;
+
+    background: #FFFFFF;
+    box-shadow: 3px 3px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+`;
+
 export default function InformationPage() {
     return (
         <Page>
@@ -67,6 +81,8 @@ export default function InformationPage() {
                 <MenuButton href="/style">Style</MenuButton>
                 <MenuButton href="/information" $active={true}>Information</MenuButton>
             </MenuWrapper>
+
+            <InfoBox />
         </Page>
     );
 }
