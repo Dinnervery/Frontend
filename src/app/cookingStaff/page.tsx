@@ -2,9 +2,11 @@
 
 import styled from "@emotion/styled";
 import LogoutButton from "@/components/LogoutButton";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Inter } from "next/font/google";
 import Link from "next/link";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const inter = Inter({
     subsets: ["latin"],
@@ -207,18 +209,118 @@ const ItemQty = styled.div`
     text-align: right;
 `;
 
+const LoadingText = styled.div`
+    font-size: 1.1rem;
+    font-family: ${inter.style.fontFamily};
+    color: #3f2316;
+`;
+
+const ErrorText = styled.div`
+    font-size: 1.1rem;
+    font-family: ${inter.style.fontFamily};
+    color: #b54450;
+`;
+
+const EmptyMessage = styled.div`
+    font-size: 1.3rem;
+    font-family: ${inter.style.fontFamily};
+    color: #3f2316;
+`;
+
+// ========== API 응답 예시 ==========
+type OrderItemOption = {
+    optionId: number;
+    name: string;
+    quantity: number;
+};
+
+type OrderItem = {
+    menuId: number;
+    name: string;
+    quantity: number;
+    options: OrderItemOption[];
+    styleId: number;
+    styleName: string;
+};
+
+type Order = {
+    orderId: number;
+    status: "REQUESTED" | "COOKING"; 
+    deliveryTime: string;
+    orderItems: OrderItem[];
+};
+
+type OrdersResponse = {
+    orders: Order[];
+};
+
+type Step = 1 | 2 | 3;
 
 export default function CookingStaffPage() {
-    const [step, setStep] = useState<1 | 2 | 3>(1);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const dinner = { name: "잉글리시", qty: 1 };
-    const options = [
-        { name: "바게트", qty: 2 },
-        { name: "베이컨", qty: 1 },
-        { name: "스테이크", qty: 1 },
-        { name: "에그 스크램블", qty: 1 },
-    ];
-    const style = { name: "그랜드", qty: 1 };
+    useEffect(() => {
+        const fetchOrders = async () => {
+            if (!API_URL) {
+                setError("API URL이 설정되어 있지 않습니다.");
+                setLoading(false);
+                return;
+            }
+
+            const token =
+            typeof window !== "undefined"
+                ? localStorage.getItem("staffToken")
+                : null;
+
+            if (!token) {
+                setError("로그인 정보가 없습니다.");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/orders/cooking`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const data: OrdersResponse = await res.json();
+
+                if (!res.ok) {
+                    setError(data as any as string || "주문을 불러오지 못했습니다.");
+                    setLoading(false);
+                    return;
+                }
+
+                setOrders(data.orders ?? []);
+            } catch (e: any) {
+                console.error("fetch orders error:", e);
+                setError("주문을 불러오지 못했습니다.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchOrders();
+    }, []);
+
+    const hasOrders = !loading && !error && orders.length > 0;
+    const currentOrder = hasOrders ? orders[0] : null;
+    const firstItem = currentOrder?.orderItems[0];
+
+    const getStepFromStatus = (
+        status: Order["status"] | undefined
+    ): Step => {
+        if (status === "COOKING") return 2;
+        return 1;
+    };
+
+    const step = getStepFromStatus(currentOrder?.status);
 
     return (
         <Page>
@@ -231,83 +333,99 @@ export default function CookingStaffPage() {
             </MenuWrapper>
 
             <MainWrap>
-                <StepRow>
-                    <StepItem>
-                        <StepCircle
-                            $active={step === 1}
-                            $done={step > 1}
-                            onClick={() => setStep(1)}
-                        >
-                            1
-                        </StepCircle>
-                        <StepLabel>requested</StepLabel>
-                    </StepItem>
+                {loading && <LoadingText>주문을 불러오는 중입니다...</LoadingText>}
 
-                    <StepLine $solid={step >= 2} />
+                {!loading && error && <ErrorText>{error}</ErrorText>}
 
-                    <StepItem>
-                        <StepCircle
-                            $active={step === 2}
-                            $done={step > 2} 
-                            onClick={() => setStep(2)}>
-                            2
-                        </StepCircle>
-                        <StepLabel>cooking</StepLabel>
-                    </StepItem>
+                {!loading && !error && orders.length === 0 && (
+                    <EmptyMessage>주문이 없습니다 🤗</EmptyMessage>
+                )}
 
-                    <StepLine $solid={step === 3} />
+                {hasOrders && currentOrder && firstItem && (
+                    <>
+                        {/* 단계 */}
+                        <StepRow>
+                            <StepItem>
+                                <StepCircle
+                                    $active={step === 1}
+                                    $done={step > 1}
+                                >
+                                    1
+                                </StepCircle>
+                                <StepLabel>requested</StepLabel>
+                            </StepItem>
 
-                    <StepItem>
-                        <StepCircle
-                            $active={step === 3} 
-                            $done={false}
-                            onClick={() => setStep(3)}>
-                            3
-                        </StepCircle>
-                        <StepLabel>done</StepLabel>
-                    </StepItem>
-                </StepRow>
+                            <StepLine $solid={step >= 2} />
 
-                <InfoBox>
-                    <BoxHeaderRow>
-                        <OrderNumber>2</OrderNumber>
+                            <StepItem>
+                                <StepCircle
+                                    $active={step === 2}
+                                    $done={step > 2}
+                                >
+                                    2
+                                </StepCircle>
+                                <StepLabel>cooking</StepLabel>
+                            </StepItem>
 
-                        <TimeRow>
-                            <TimeIcon>⏰</TimeIcon>
-                            <span>18:30</span>
-                        </TimeRow>
-                    </BoxHeaderRow>
+                            <StepLine $solid={step === 3} />
 
-                    <Section>
-                        <SectionTitle>Dinner</SectionTitle>
-                        <ItemRow>
-                            <ItemName>{dinner.name}</ItemName>
-                            <ItemQty>{dinner.qty}</ItemQty>
-                        </ItemRow>
-                    </Section>
+                            <StepItem>
+                                <StepCircle
+                                    $active={step === 3}
+                                    $done={false}
+                                >
+                                    3
+                                </StepCircle>
+                                <StepLabel>done</StepLabel>
+                            </StepItem>
+                        </StepRow>
 
-                    <Divider />
+                        {/* 박스 */}
+                        <InfoBox>
+                            <BoxHeaderRow>
+                                <OrderNumber>{currentOrder.orderId}</OrderNumber>
 
-                    <Section>
-                        <SectionTitle>Option</SectionTitle>
-                        {options.map((item) => (
-                            <ItemRow key={item.name}>
-                                <ItemName>{item.name}</ItemName>
-                                <ItemQty>{item.qty}</ItemQty>
-                            </ItemRow>
-                        ))}
-                    </Section>
+                                <TimeRow>
+                                    <TimeIcon>⏰</TimeIcon>
+                                    <span>{currentOrder.deliveryTime}</span>
+                                </TimeRow>
+                            </BoxHeaderRow>
 
-                    <Divider />
+                            {/* Dinner */}
+                            <Section>
+                                <SectionTitle>Dinner</SectionTitle>
+                                <ItemRow>
+                                    <ItemName>{firstItem.name}</ItemName>
+                                    <ItemQty>{firstItem.quantity}</ItemQty>
+                                </ItemRow>
+                            </Section>
 
-                    <Section>
-                        <SectionTitle>Style</SectionTitle>
-                        <ItemRow>
-                            <ItemName>{style.name}</ItemName>
-                            <ItemQty>{style.qty}</ItemQty>
-                        </ItemRow>
-                    </Section>
-                </InfoBox>
+                            <Divider />
+
+                            {/* Options */}
+                            <Section>
+                                <SectionTitle>Option</SectionTitle>
+                                {firstItem.options.map((opt) => (
+                                    <ItemRow key={opt.optionId}>
+                                        <ItemName>{opt.name}</ItemName>
+                                        <ItemQty>{opt.quantity}</ItemQty>
+                                    </ItemRow>
+                                ))}
+                            </Section>
+
+                            <Divider />
+
+                            {/* Style */}
+                            <Section>
+                                <SectionTitle>Style</SectionTitle>
+                                <ItemRow>
+                                    <ItemName>{firstItem.styleName}</ItemName>
+                                    <ItemQty>1</ItemQty>
+                                </ItemRow>
+                            </Section>
+                        </InfoBox>
+                    </>
+                )}
             </MainWrap>
         </Page>
     );

@@ -169,6 +169,21 @@ export default function LoginPage() {
                 alert(data.message || "로그인에 실패했습니다.");
                 return;
             }
+
+            if (typeof window !== "undefined" && data) {
+                if (data.token) {
+                    localStorage.setItem("staffToken", data.token);
+                }
+                if (data.task) {
+                    localStorage.setItem("staffTask", data.task); // "COOK" | "DELIVERY"
+                }
+                if (data.staffId) {
+                    localStorage.setItem("staffId", String(data.staffId));
+                }
+                if (data.name) {
+                    localStorage.setItem("staffName", data.name);
+                }
+            }
             
             // 직원 확인
             if ("task" in data) {
