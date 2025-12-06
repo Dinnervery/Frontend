@@ -232,23 +232,82 @@ const PrevOrderButton = styled.img`
 const PrevOrderBox = styled.div<{ $open: boolean}>`
     width: 300px;
     height: ${(p) => (p.$open ? "450px" : "0px")}; 
-    margin-top: ${(p) => (p.$open ? "-25p" : "0px")};
+    margin-top: ${(p) => (p.$open ? "-25px" : "0px")};
     padding: ${(p) => (p.$open ? "35px 15px 30px 15px" : "0 15px")};
     overflow: hidden;
     z-index: 777;
 
     background: #FDF5E6;
     color: #4b3525;
-    border-radius: 16px;
+    border-radius: 10px 10px 0px 0px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    border: ${(p) => (p.$open ? "4px solid #4b3525;" : "4px solid #4b3525;")}; 
 
     transition:
         height 0.4s ease,
         padding 0.4s ease,
-        margin-top 0.4s ease;
+        margin-top 0.4s ease,
+        border 0.4s ease;
 
     font-family: ${inter.style.fontFamily};
-    font-size: 0.95rem;
+    font-size: 13px;
+`;
+
+const PrevOrderList = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+`;
+
+const PrevOrderItem = styled.div<{ $variant: "pink" | "brown" }>`
+    width: 100%;
+    padding: 10px 14px 8px 14px;
+
+    border-radius: 10px;
+    border: 2px solid
+        ${(p) => (p.$variant === "pink" ? "#FFBFBE" : "#3F2316")};
+    background: white;
+
+    font-family: ${inter.style.fontFamily};
+    color: #3f2316;
+`;
+
+const ItemTopRow = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+`;
+
+const ItemDate = styled.span`
+    font-weight: 400;
+
+    font-size: 14px;
+`;
+
+const ItemPrice = styled.span`
+    color: #B54450;
+
+    font-weight: 400;
+    font-size: 13px;
+`;
+
+const ItemDesc = styled.div`
+    white-space: pre-line;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    font-size: 14px;
+`;
+
+const ItemBottomRow = styled.div`
+    display: flex;
+    justify-content: flex-end;
+`;
+
+const ItemStatus = styled.span`
+    font-size: 12px;
+    color: rgba(63, 35, 22, 0.6);
 `;
 
 const Overlay = styled.div<{ $active: boolean }>`
@@ -323,7 +382,36 @@ export default function DinnerPage() {
                     onClick={handlePrevOrderClick}
                 />
                 <PrevOrderBox $open={prevOrderActive}>
-                    이전 주문 내역 아아아아아아아아아아아아아아아아
+                    내역 클릭 시, 해당 메뉴 및 옵션으로 재주문됩니다.
+                    <PrevOrderList>
+                        <PrevOrderItem $variant="pink">
+                            <ItemTopRow>
+                                <ItemDate>2025.09.11</ItemDate>
+                                <ItemPrice>₩43,000</ItemPrice>
+                            </ItemTopRow>
+
+                            <ItemDesc>
+                                발렌타인 디너 1개(스테이크 2, 와인 1),{"\n"}
+                                심플 스타일
+                            </ItemDesc>
+                        </PrevOrderItem>
+
+                        <PrevOrderItem $variant="brown">
+                            <ItemTopRow>
+                                <ItemDate>2025.08.29</ItemDate>
+                                <ItemPrice>₩43,000</ItemPrice>
+                            </ItemTopRow>
+
+                            <ItemDesc>
+                                발렌타인 디너 1개(스테이크 2, 와인 1),{"\n"}
+                                심플 스타일
+                            </ItemDesc>
+
+                            <ItemBottomRow>
+                                <ItemStatus>15:14 배달 완료</ItemStatus>
+                            </ItemBottomRow>
+                        </PrevOrderItem>
+                    </PrevOrderList>
                 </PrevOrderBox>
             </PrevOrderContainer>
 
