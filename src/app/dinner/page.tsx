@@ -284,6 +284,22 @@ const PrevOrderItem = styled.div<{ $variant: "pink" | "brown" }>`
     color: #3f2316;
 `;
 
+const EmptyState = styled.div`
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+
+    color: #3f2316;
+
+    font-size: 15px;    
+    font-weight: 700;
+    text-align: center;
+    font-family: "SOYO";
+`;
+
 const ItemTopRow = styled.div`
     display: flex;
     justify-content: space-between;
@@ -353,6 +369,23 @@ const MENU_DESC: Record<number, string> = {
     4: "2인, 바게트 4개,\n샴페인 1병, 스테이크,\n와인, 커피 1포트",
 };
 
+type OrderStatus = "COOKING" | "DELIVERING" | "DONE";
+
+type OrderOption = {
+    optionId: number;
+    name: string;
+};
+
+type Order = {
+    orderId: number;
+    orderDate: string;
+    status: OrderStatus; // "COOKING" | "DELIVERING" | "DONE"
+    deliveryTime?: string; // done 누른 시간
+    totalPrice: number;
+    orderItems: string;
+    options: OrderOption[];
+};
+
 export default function DinnerPage() {
     const [activeIndex, setActiveIndex] = useState(0);
     const [prevOrderActive, setPrevOrderActive] = useState(false);
@@ -368,8 +401,12 @@ export default function DinnerPage() {
         : undefined;
     const desc = activeMenu ? MENU_DESC[activeMenu.menuId] : "";
 
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [ordersLoading, setOrdersLoading] = useState(true);
+    const [ordersError, setOrdersError] = useState<string | null>(null);
+
     useEffect(() => {
-        const fetchMenus = async () => {
+        const fetchOrders = async () => {
             try {
                 const customerId = 1;
                 const res = await fetch(
@@ -382,16 +419,16 @@ export default function DinnerPage() {
                 }
 
                 const data = await res.json();
-                setMenus(data.menus ?? []);
+                setOrders(data.orders ?? []);
             } catch (e: any) {
                 console.error(e);
-                setError(e.message ?? "오류가 발생했습니다.");
+                setOrdersError(e?.message ?? "오류가 발생했습니다.");
             } finally {
-                setLoading(false);
+                setOrdersLoading(false);
             }
         };
 
-        fetchMenus();
+        fetchOrders();
     }, []);
 
     const router = useRouter();
@@ -445,36 +482,40 @@ export default function DinnerPage() {
                 />
                 <PrevOrderBox $open={prevOrderActive}>
                     내역 클릭 시, 해당 메뉴 및 옵션으로 재주문됩니다.
-                    <PrevOrderList>
-                        <PrevOrderItem $variant="pink">
-                            <ItemTopRow>
-                                <ItemDate>2025.09.11</ItemDate>
-                                <ItemPrice>₩43,000</ItemPrice>
-                            </ItemTopRow>
 
-                            <ItemDesc>
-                                발렌타인 디너 1개(스테이크 2, 와인 1),{"\n"}
-                                심플 스타일
-                            </ItemDesc>
-                        </PrevOrderItem>
+                    {ordersLoading && <EmptyState>주문 내역 불러오는 중...</EmptyState>}
+                    {ordersError && !ordersLoading && <EmptyState>오류: {ordersError}</EmptyState>}
+                    {!ordersLoading && !ordersError && orders.length === 0 && (
+                        <EmptyState>이전 주문 내역이 없습니다 😢</EmptyState>
+                    )}
 
-                        <PrevOrderItem $variant="brown">
-                            <ItemTopRow>
-                                <ItemDate>2025.08.29</ItemDate>
-                                <ItemPrice>₩43,000</ItemPrice>
-                            </ItemTopRow>
+                    {!ordersLoading && !ordersError && orders.length > 0 && (
+                        <PrevOrderList>
+                        {orders.map((order) => {
+                            const variant: "pink" | "brown" = order.status === "DONE" ? "brown" : "pink";
+                            return (
+                            <PrevOrderItem key={order.orderId} $variant={variant}>
+                                <ItemTopRow>
+                                <ItemDate>{order.orderDate}</ItemDate>
+                                <ItemPrice>₩{order.totalPrice.toLocaleString()}</ItemPrice>
+                                </ItemTopRow>
 
-                            <ItemDesc>
-                                발렌타인 디너 1개(스테이크 2, 와인 1),{"\n"}
-                                심플 스타일
-                            </ItemDesc>
+                                <ItemDesc>
+                                {order.orderItems}
+                                {order.options?.length ? `\n${order.options.map((o) => o.name).join(", ")}` : ""}
+                                </ItemDesc>
 
-                            <ItemBottomRow>
-                                <ItemStatus>15:14 배달 완료</ItemStatus>
-                            </ItemBottomRow>
-                        </PrevOrderItem>
-                    </PrevOrderList>
-                </PrevOrderBox>
+                                {order.status === "DONE" && order.deliveryTime && (
+                                <ItemBottomRow>
+                                    <ItemStatus>{order.deliveryTime} 배달 완료</ItemStatus>
+                                </ItemBottomRow>
+                                )}
+                            </PrevOrderItem>
+                            );
+                        })}
+                        </PrevOrderList>
+                    )}
+                    </PrevOrderBox>
             </PrevOrderContainer>
 
             <MenuWrapper>
