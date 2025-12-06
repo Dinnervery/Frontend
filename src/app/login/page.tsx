@@ -146,7 +146,7 @@ export default function LoginPage() {
         !signupPhone.trim() ||
         !signupAddress.trim();
 
-    // 로그인 버튼 → Dinner 페이지 이동
+    // 로그인 버튼
     const handleLoginClick = async() => {
         if (isLoginDisabled) {
             alert("ID와 Password를 모두 입력해주세요.");
@@ -154,7 +154,7 @@ export default function LoginPage() {
         }
         
         try {
-            const res = await fetch(`${API_URL}/auth/staff/login`, {
+            const res = await fetch(`${API_URL}/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -173,31 +173,41 @@ export default function LoginPage() {
             }
 
             if (typeof window !== "undefined" && data) {
-                if (data.token) {
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("userId", String(data.userId));
+                localStorage.setItem("loginId", data.loginId);
+                localStorage.setItem("name", data.name);
+                localStorage.setItem("role", data.role);
+
+                if (data.role === "COOK" || data.role === "DELIVERY") {
+                    // 직원
                     localStorage.setItem("staffToken", data.token);
-                }
-                if (data.task) {
-                    localStorage.setItem("staffTask", data.task); // "COOK" | "DELIVERY"
-                }
-                if (data.staffId) {
-                    localStorage.setItem("staffId", String(data.staffId));
-                }
-                if (data.name) {
+                    if (data.task) {
+                        localStorage.setItem("staffTask", data.task); // "COOK" | "DELIVERY"
+                    }
+                    localStorage.setItem("staffId", String(data.userId));
                     localStorage.setItem("staffName", data.name);
                 }
-            }
+
+                if (data.role === "CUSTOMER") {
+                    // 고객
+                    localStorage.setItem("customerToken", data.token);
+                    localStorage.setItem("customerId", String(data.userId));
+                    localStorage.setItem("customerName", data.name);
+                    if (data.grade) {
+                        localStorage.setItem("customerGrade", data.grade);
+                    }
+                }
+            } 
             
             // 직원 확인
-            if ("task" in data) {
-                if (data.task === "COOK") {
-                    router.push("/cookingStaff");
-                    return;
-                }
-                if (data.task === "DELIVERY") {
-                    router.push("/deliveringStaff");
-                    return;
-                }
-                router.push("/dinner");
+            if (data.role === "COOK" || data.task === "COOK") {
+                router.push("/cookingStaff");
+                return;
+            }
+
+            if (data.role === "DELIVERY" || data.task === "DELIVERY") {
+                router.push("/deliveringStaff");
                 return;
             }
 
@@ -210,7 +220,7 @@ export default function LoginPage() {
         }
     };
 
-    // 회원가입 버튼 → 로그인 탭으로 전환
+    // 회원가입 버튼
     const handleSignupClick = () => {
         if (isSignupDisabled) {
         alert("모든 정보가 필요합니다.");
