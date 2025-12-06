@@ -122,6 +122,15 @@ const NextButton = styled.button<{ isDisabled: boolean }>`
     opacity: ${({ isDisabled }) => (isDisabled ? 0.3 : 1)};
 `;
 
+type SignupResponse = {
+    customerId: number;
+    loginId: string;
+    name: string;
+    phoneNumber: string;
+    grade: "BASIC" | "VIP";
+    orderCount: number;
+};
+
 export default function LoginPage() {
     const router = useRouter();
 
@@ -220,15 +229,59 @@ export default function LoginPage() {
         }
     };
 
-    // 회원가입 버튼
-    const handleSignupClick = () => {
+    // 회원가입
+    const handleSignupClick = async() => {
         if (isSignupDisabled) {
-        alert("모든 정보가 필요합니다.");
-        return;
+            alert("모든 정보가 필요합니다.");
+            return;
         }
 
-        alert("회원가입이 완료되었습니다.");
-        setSelected("login"); 
+        if (!API_URL) {
+            alert("API URL이 설정되어 있지 않습니다.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/auth/customer/signup`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    loginId: signupId,
+                    password: signupPassword,
+                    name: signupName,
+                    phoneNumber: signupPhone,
+                    address: signupAddress,
+                }),
+            });
+
+            const data: SignupResponse | { message?: string } = await res.json();
+
+            if (!res.ok) {
+                alert(
+                    ("message" in data && data.message) ||
+                        "회원가입에 실패했습니다."
+                );
+                return;
+            }
+
+            // 성공
+            alert("회원가입이 완료되었습니다.");
+
+            // 회원가입 폼 비우기
+            setSignupId("");
+            setSignupPassword("");
+            setSignupName("");
+            setSignupPhone("");
+            setSignupAddress("");
+
+            // 로그인 탭
+            setSelected("login");
+        } catch (error: any) {
+            console.error("signup error:", error);
+            alert(`에러: ${error?.message || error}`);
+        }
     };
 
     return (
