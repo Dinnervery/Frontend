@@ -91,14 +91,16 @@ const Label = styled.label`
 `;
 
 const Input = styled.input`
+    padding: 10px 0;
+    margin: 0 0 10px 0;
+
     border: none;
     border-bottom: 1px solid #8c6543;
     background: transparent;
-    padding: 10px 0;
-    margin: 0 0 10px 0;
-    font-size: 16px;
-    font-family: "SOYO", sans-serif;
     outline: none;
+
+    font-size: 18px;
+    font-family: ${inter.style.fontFamily};
 `;
 
 const ButtonRow = styled.div`

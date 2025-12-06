@@ -79,8 +79,8 @@ const StepRow = styled.div`
 
 const StepItem = styled.div`
     position: relative;
-    width: 35px;   /* 원 크기 기준 */
-    height: 90px;  /* 원 + 텍스트 들어갈 높이 */
+    width: 35px; /* 원 크기 기준 */
+    height: 90px; /* 원 + 텍스트 들어갈 높이 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -179,6 +179,7 @@ const TimeIcon = styled.span`
 
 const Divider = styled.div`
     height: 1px;
+
     background: #e5e5e5;
 `;
 
@@ -210,20 +211,20 @@ const ItemQty = styled.div`
 `;
 
 const LoadingText = styled.div`
-    font-size: 1.1rem;
-    font-family: ${inter.style.fontFamily};
+    font-size: 1.3rem;
+    font-family: "SOYO";
     color: #3f2316;
 `;
 
 const ErrorText = styled.div`
-    font-size: 1.1rem;
-    font-family: ${inter.style.fontFamily};
+    font-size: 1.3rem;
+    font-family: "SOYO";
     color: #b54450;
 `;
 
 const EmptyMessage = styled.div`
     font-size: 1.3rem;
-    font-family: ${inter.style.fontFamily};
+    font-family: "SOYO";
     color: #3f2316;
 `;
 
