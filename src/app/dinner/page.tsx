@@ -3,9 +3,11 @@
 import styled from "@emotion/styled";
 import Link from "next/link";
 import { Inter } from "next/font/google";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 const inter = Inter({
     subsets: ["latin"],
@@ -76,10 +78,10 @@ const MenuButton = styled(Link, {
 const Card = styled.div`
     position: absolute;
     top: 35%;
-    left: 5%;
+    left: 72px;
     display: flex;
     flex-direction: column;
-    width: 170px;
+    width: 190px;
 
     color: #4b3525;
 
@@ -87,28 +89,28 @@ const Card = styled.div`
 `;
 
 const Price = styled.div`
-    margin-bottom: 5px;
+    margin-bottom: 7px;
 
     color: #B54450;   
 
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
 `;
 
 const Title = styled.div`
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 
     font-size: 1.7rem;
     font-weight: 700;
 `;
 
 const Desc = styled.div`
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     white-space: pre-line;
 
     color: black;
 
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 400;
 `;
 
@@ -116,7 +118,7 @@ const SelectButton = styled.button`
     display: block;
     text-align: center;
     margin-top: 10px;
-    padding: 15px 0;
+    padding: 12px 0;
 
     cursor: pointer;
     border: none;
@@ -205,6 +207,13 @@ const photos = [
     { id: "fren", src: "/D-fren.png", alt: "D-fren", size: 320},
     { id: "valen", src: "/D-valen.png", alt: "D-valen", size: 260},
 ];
+
+const PHOTO_MENU_ID: Record<string, number> = {
+    valen: 1,
+    eng: 2,
+    fren: 3,
+    cham: 4,
+};
 
 const PrevOrderContainer = styled.div<{ $active: boolean }>`
     position: fixed;
@@ -330,22 +339,73 @@ const Overlay = styled.div<{ $active: boolean }>`
     z-index: 1000; 
 `;
 
+// ========== API 응답 ==========
+type Menu = {
+    menuId: number;
+    name: string;
+    price: number;
+};
+
+const MENU_DESC: Record<number, string> = {
+    1: "스테이크, 와인 1잔,\n하트/큐피드 접시, 냅킨",
+    2: "베이컨, 바게트 1개,\n스테이크, 에그 스크램블",
+    3: "샐러드, 스테이크,\n와인 1잔, 커피",
+    4: "2인, 바게트 4개,\n샴페인 1병, 스테이크,\n와인, 커피 1포트",
+};
+
 export default function DinnerPage() {
     const [activeIndex, setActiveIndex] = useState(0);
     const [prevOrderActive, setPrevOrderActive] = useState(false);
-    const router = useRouter();
 
+    const [menus, setMenus] = useState<Menu[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const currentPhoto = photos[activeIndex];
+    const currentMenuId = currentPhoto ? PHOTO_MENU_ID[currentPhoto.id] : undefined;
+    const activeMenu = currentMenuId
+        ? menus.find((menu) => menu.menuId === currentMenuId)
+        : undefined;
+    const desc = activeMenu ? MENU_DESC[activeMenu.menuId] : "";
+
+    useEffect(() => {
+        const fetchMenus = async () => {
+            try {
+                const customerId = 1;
+                const res = await fetch(
+                    `${API_URL}/menus?customerId=${customerId}`,
+                    { credentials: "include" }
+                );
+
+                if (!res.ok) {
+                    throw new Error("메뉴 조회 실패");
+                }
+
+                const data = await res.json();
+                setMenus(data.menus ?? []);
+            } catch (e: any) {
+                console.error(e);
+                setError(e.message ?? "오류가 발생했습니다.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchMenus();
+    }, []);
+
+    const router = useRouter();
     const positionOrder: PositionType[] = ["top", "right", "bottom", "left"];
 
     const handleSelectDinner = () => {
-        const selectedDinner = photos[activeIndex];
-        router.push(`/option?dinner=${selectedDinner.id}`);
+        if (!activeMenu) return;
+
+        router.push(`/option?menuId=${activeMenu.menuId}`);
     };
 
     const handlePrevOrderClick = () => {
         setPrevOrderActive((prev) => !prev); 
     };
-
 
     return (
         <Page>
@@ -425,10 +485,22 @@ export default function DinnerPage() {
             </MenuWrapper>
 
             <Card>
-                <Price>가격</Price>
-                <Title>디너</Title>
-                <Desc>설명</Desc>
-                <SelectButton type="button" onClick={handleSelectDinner}>
+                <Price>
+                    {activeMenu
+                        ? `₩${activeMenu.price.toLocaleString()}`
+                        : "가격"}
+                </Price>
+
+                <Title>{activeMenu ? activeMenu.name : "디너"}</Title>
+
+                <Desc>
+                    {loading && "메뉴 불러오는 중..."}
+                    {error && !loading && `오류: ${error}`}
+                    {!loading && !error && !activeMenu && "등록된 디너가 없습니다."}
+                    {!loading && !error && activeMenu && (desc || "설명 준비 중...")}
+                </Desc>
+
+                <SelectButton type="button" onClick={handleSelectDinner} disabled={!activeMenu}>
                     디너 선택
                 </SelectButton>
             </Card>

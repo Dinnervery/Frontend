@@ -228,7 +228,7 @@ const EmptyMessage = styled.div`
     color: #3f2316;
 `;
 
-// ========== API 응답 예시 ==========
+// ========== API 응답 ==========
 type OrderItemOption = {
     optionId: number;
     name: string;
