@@ -131,6 +131,17 @@ type SignupResponse = {
     orderCount: number;
 };
 
+type LoginResponse = {
+    userId: number;
+    loginId: string;
+    name: string;
+    role: "CUSTOMER" | "COOK" | "DELIVERY";
+    grade?: "BASIC" | "VIP";
+    task?: "COOK" | "DELIVERY";
+    token: string;
+    message?: string;
+};
+
 export default function LoginPage() {
     const router = useRouter();
 
@@ -174,7 +185,8 @@ export default function LoginPage() {
                 }),
             });
 
-            const data = await res.json();
+            const data: LoginResponse = await res.json();
+            console.log("로그인 응답:", data);
 
             if (!res.ok) {
                 alert(data.message || "로그인에 실패했습니다.");

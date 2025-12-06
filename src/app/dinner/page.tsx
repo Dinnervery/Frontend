@@ -56,7 +56,7 @@ const MenuWrapper = styled.div`
 
 const MenuButton = styled(Link, {
     shouldForwardProp: (prop) => prop !== '$active' && prop !== '$disabled',
-})<{ $active?: boolean; $disabled ? : boolean }>`
+})<{ $active?: boolean; $disabled?: boolean }>`
     cursor: ${(p) => (p.$disabled ? "default" : "pointer")};
     color: white;
     opacity: ${(props) => (props.$active ? 1.0 : 0.6)};
@@ -213,13 +213,6 @@ const PHOTO_MENU_ID: Record<string, number> = {
     cham: 4,
 };
 
-const MENUS: Menu[] = [
-    { menuId: 1, name: "발렌타인데이 디너", price: 50000 },
-    { menuId: 2, name: "잉글리시 디너",   price: 35000 },
-    { menuId: 3, name: "프렌치 디너",       price: 42000 },
-    { menuId: 4, name: "샴페인 디너",       price: 68000 },
-];
-
 const PrevOrderContainer = styled.div<{ $active: boolean }>`
     position: fixed;
     bottom: 0px;
@@ -363,6 +356,13 @@ const Overlay = styled.div<{ $active: boolean }>`
 // ========== API 응답 ==========
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
+const MENUS: Menu[] = [
+    { menuId: 1, name: "발렌타인데이 디너", price: 50000 },
+    { menuId: 2, name: "잉글리시 디너",   price: 35000 },
+    { menuId: 3, name: "프렌치 디너",       price: 42000 },
+    { menuId: 4, name: "샴페인 디너",       price: 68000 },
+];
+
 type Menu = {
     menuId: number;
     name: string;
@@ -376,30 +376,83 @@ const MENU_DESC: Record<number, string> = {
     4: "(2인) 바게트 4개,\n샴페인 1병, 스테이크,\n와인, 커피 1포트",
 };
 
-type OrderStatus = "COOKING" | "DELIVERING" | "DONE";
+type OrderStatus = "REQUESTED" | "COOKING" | "DELIVERING" | "COOKED" | "DONE";
 
-type OrderOption = {
-    optionId: number;
+type OrderItemOption = {
+    quantity: number;
     name: string;
+};
+
+type OrderItem = {
+    quantity: number;
+    name: string;
+    options: OrderItemOption[];
+    styleName: string;
 };
 
 type Order = {
     orderId: number;
     orderDate: string;
-    status: OrderStatus; // "COOKING" | "DELIVERING" | "DONE"
-    deliveryTime?: string; // done 누른 시간
+    status: OrderStatus;
+    deliveryTime?: string;
     totalPrice: number;
-    orderItems: string;
-    options: OrderOption[];
+    orderItems: OrderItem[];
 };
 
 const CART_DRAFT_KEY = "cartDraft";
 
 type CartDraft = {
     menuId: number;
-    optionIds: number[];
-    servingStyleId: number | null;
+    menuName: string;
+    menuPrice: number;
     quantity: number;
+    servingStyleId: number | null;
+    servingStyleName: string | null;
+    styleExtraPrice: number;
+    options: CartItemOptionRequest[];
+};
+
+type CartItemOptionRequest = {
+    optionId: number;
+    optionName: string;
+    optionPrice: number;
+    defaultQty: number;
+    quantity: number;
+};
+
+type CartItemRequest = {
+    menuId: number;
+    menuName: string;
+    menuPrice: number;
+    menuQuantity: number;
+    styleId: number;
+    styleName: string;
+    styleExtraPrice: number;
+    options: CartItemOptionRequest[];
+};
+
+type CartItemOptionResponse = {
+    optionId: number;
+    name: string;
+    quantity: number;
+    unitPrice: number;
+};
+
+type CartItemResponse = {
+    cartItemId: number;
+    menu: {
+        menuId: number;
+        name: string;
+        quantity: number;
+        unitPrice: number;
+    };
+    style: {
+        styleId: number;
+        name: string;
+        price: number;
+    };
+    options: CartItemOptionResponse[];
+    totalAmount: number;
 };
 
 export default function DinnerPage() {
@@ -424,18 +477,47 @@ export default function DinnerPage() {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const customerId = 1;
-                const res = await fetch(
-                    `${API_URL}/menus?customerId=${customerId}`,
-                    { credentials: "include" }
-                );
+                if (typeof window === "undefined") return;
+
+                const rawCustomerId =
+                    localStorage.getItem("customerId") || localStorage.getItem("userId");
+                if (!rawCustomerId) {
+                    setOrdersError("로그인 정보가 없습니다.");
+                    setOrdersLoading(false);
+                    return;
+                }
+
+                const customerId = Number(rawCustomerId);
+                if (Number.isNaN(customerId)) {
+                    setOrdersError("로그인 정보가 올바르지 않습니다.");
+                    setOrdersLoading(false);
+                    return;
+                }
+
+                const token = localStorage.getItem("token");
+
+                console.log("🔍 API 요청 시작");
+                console.log("API_URL:", API_URL);
+                console.log("customerId:", customerId);
+                console.log("token:", token);
+
+                const res = await fetch(`${API_URL}/orders/customer/${customerId}`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                    },
+                    credentials: "include",
+                });
 
                 if (!res.ok) {
-                    throw new Error("메뉴 조회 실패");
+                    const errorText = await res.text();
+                    console.error("주문 조회 실패:", res.status, errorText);
+                    throw new Error("주문 조회 실패");
                 }
 
                 const data = await res.json();
-                setOrders(data.orders ?? []);
+
+                setOrders(data);
             } catch (e: any) {
                 console.error(e);
                 setOrdersError(e?.message ?? "오류가 발생했습니다.");
@@ -450,23 +532,90 @@ export default function DinnerPage() {
     const router = useRouter();
     const positionOrder: PositionType[] = ["top", "right", "bottom", "left"];
 
-    const handleSelectDinner = () => {
+    const handleSelectDinner = async() => {
         if (!activeMenu) return;
 
         const draft: CartDraft = {
             menuId: activeMenu.menuId,
-            optionIds: [],
-            servingStyleId: null,
+            menuName: activeMenu.name,
+            menuPrice: activeMenu.price,
             quantity: 1,
+            servingStyleId: null,
+            servingStyleName: null,
+            styleExtraPrice: 0,
+            options: [], 
         };
+
         localStorage.setItem(CART_DRAFT_KEY, JSON.stringify(draft));
         router.push(`/option?dinner=${currentPhoto.id}`);
+
+        try {
+            const body: CartItemRequest = {
+                menuId: activeMenu.menuId,
+                menuName: activeMenu.name,
+                menuPrice: activeMenu.price,
+                menuQuantity: 1,
+                styleId: 1, 
+                styleName: "SIMPLE",
+                styleExtraPrice: 0,
+                options: [], 
+            };
+
+            const cartItem = await addCartItem(body);
+            console.log("카트 응답:", cartItem);
+
+            router.push(`/option?dinner=${currentPhoto.id}`);
+        } catch (e) {
+            console.error(e);
+            alert("장바구니 추가 중 오류가 발생했습니다.");
+        }
     };
 
 
     const handlePrevOrderClick = () => {
         setPrevOrderActive((prev) => !prev); 
     };
+
+    async function addCartItem(
+        body: CartItemRequest
+    ): Promise<CartItemResponse> {
+        if (typeof window === "undefined") {
+            throw new Error("브라우저 환경이 아닙니다.");
+        }
+
+        const rawCustomerId =
+            localStorage.getItem("customerId") || localStorage.getItem("userId");
+        if (!rawCustomerId) {
+            throw new Error("로그인 정보가 없습니다.");
+        }
+
+        const customerId = Number(rawCustomerId);
+        if (Number.isNaN(customerId)) {
+            throw new Error("로그인 정보가 올바르지 않습니다.");
+        }
+
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(`${API_URL}/cart/${customerId}/items`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token ?? ""}`,
+            },
+            credentials: "include",
+            body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("장바구니 추가 실패:", res.status, text);
+            throw new Error("장바구니 추가 실패");
+        }
+
+        const data = (await res.json()) as CartItemResponse;
+        console.log("장바구니 추가 성공:", data);
+        return data;
+    }
 
     return (
         <Page>
@@ -518,23 +667,37 @@ export default function DinnerPage() {
                         {orders.map((order) => {
                             const variant: "pink" | "brown" = order.status === "DONE" ? "brown" : "pink";
                             return (
-                            <PrevOrderItem key={order.orderId} $variant={variant}>
-                                <ItemTopRow>
-                                <ItemDate>{order.orderDate}</ItemDate>
-                                <ItemPrice>₩{order.totalPrice.toLocaleString()}</ItemPrice>
-                                </ItemTopRow>
+                                <PrevOrderItem key={order.orderId} $variant={variant}>
+                                    <ItemTopRow>
+                                    <ItemDate>{order.orderDate}</ItemDate>
+                                    <ItemPrice>₩{order.totalPrice.toLocaleString()}</ItemPrice>
+                                    </ItemTopRow>
 
-                                <ItemDesc>
-                                {order.orderItems}
-                                {order.options?.length ? `\n${order.options.map((o) => o.name).join(", ")}` : ""}
-                                </ItemDesc>
+                                    <ItemDesc>
+                                        {order.orderItems
+                                            .map((item) => {
+                                            const optionText = item.options?.length
+                                                ? item.options
+                                                    .map((o) => `${o.name} x${o.quantity}`)
+                                                    .join(", ")
+                                                : "";
 
-                                {order.status === "DONE" && order.deliveryTime && (
-                                <ItemBottomRow>
-                                    <ItemStatus>{order.deliveryTime} 배달 완료</ItemStatus>
-                                </ItemBottomRow>
-                                )}
-                            </PrevOrderItem>
+                                            const base = `${item.name} x${item.quantity}`;
+                                            const style = item.styleName ? ` (${item.styleName})` : "";
+
+                                            return optionText
+                                                ? `${base}${style}\n옵션: ${optionText}`
+                                                : `${base}${style}`;
+                                            })
+                                            .join("\n\n")}
+                                        </ItemDesc>
+
+                                    {order.status === "DONE" && order.deliveryTime && (
+                                    <ItemBottomRow>
+                                        <ItemStatus>{order.deliveryTime} 배달 완료</ItemStatus>
+                                    </ItemBottomRow>
+                                    )}
+                                </PrevOrderItem>
                             );
                         })}
                         </PrevOrderList>

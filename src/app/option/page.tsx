@@ -208,7 +208,7 @@ const optionItemsByDinner: Record<DinnerId, OptionItem[]> = {
         { id: "bacon", src: "/O-bacon.png", alt: "bacon", name: "베이컨", price: 4000 },
         { id: "bread", src: "/O-bread.png", alt: "bread", name: "빵", price: 3000 },
         { id: "egg", src: "/O-egg.png", alt: "egg", name: "계란", price: 5000 },
-        { id: "steak", src: "/O-steak.png", alt: "스테이크", name: "Steak", price: 15000 },
+        { id: "steak", src: "/O-steak.png", alt: "steak", name: "스테이크", price: 15000 },
     ],
     fren: [
         { id: "coffee", src: "/O-coffee.png", alt: "coffee", name: "커피", price: 5000 },
@@ -226,13 +226,25 @@ const optionItemsByDinner: Record<DinnerId, OptionItem[]> = {
 };
 
 // ========== API ==========
+type DraftOption = {
+    optionId: number;
+    optionName: string;
+    optionPrice: number;
+    defaultQty: number;
+    quantity: number;
+};
+
 const CART_DRAFT_KEY = "cartDraft";
 
 type CartDraft = {
     menuId: number;
-    optionIds: number[];
-    servingStyleId: number | null;
+    menuName: string;         
+    menuPrice: number;     
     quantity: number;
+    servingStyleId: number | null;
+    servingStyleName: string | null;
+    styleExtraPrice: number;  
+    options: DraftOption[];
 };
 
 export default function OptionPage() {
@@ -277,7 +289,6 @@ export default function OptionPage() {
         // 1. draft 가져오기
         const raw = localStorage.getItem(CART_DRAFT_KEY);
         if (!raw) {
-            // draft 없으면 디너부터 다시 선택하게 보내기
             router.push("/dinner");
             return;
         }
@@ -285,29 +296,37 @@ export default function OptionPage() {
         const draft: CartDraft = JSON.parse(raw);
 
         // 2. 옵션 선택 + 수량 넣기
-        const optionIds: number[] = [];
+        const options: DraftOption[] = [];
 
         items.forEach((item) => {
             if (!selectedOption[item.id]) return;
 
             const backendOptionId = OPTION_ID_MAP[item.name];
-            if (!backendOptionId) return;
-
-            const count = qtyById[item.id] ?? 1;
-            for (let i = 0; i < count; i++) {
-                optionIds.push(backendOptionId);
+            if (!backendOptionId) {
+                console.warn("옵션 ID 매핑 실패:", item.name);
+                return;
             }
+
+            const quantity = qtyById[item.id] ?? 1;
+
+            options.push({
+                optionId: backendOptionId,
+                optionName: item.name,
+                optionPrice: item.price,
+                defaultQty: 1,
+                quantity,     
+            });
         });
 
         const updatedDraft: CartDraft = {
             ...draft,
-            optionIds, 
+            options, 
         };
 
         localStorage.setItem(CART_DRAFT_KEY, JSON.stringify(updatedDraft));
 
         router.push(`/style?dinner=${dinner}`);
-    }, [items, selectedOption, router, dinner]);
+    }, [items, selectedOption, qtyById, router, dinner]);
 
     return (
         <Page>

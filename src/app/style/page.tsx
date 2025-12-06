@@ -197,24 +197,41 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const CART_DRAFT_KEY = "cartDraft";
 
-type CartDraft = {
-    menuId: number;
-    optionIds: number[];
-    servingStyleId: number | null;
+type DraftOption = {
+    optionId: number;
+    optionName: string;
+    optionPrice: number;
+    defaultQty: number;
     quantity: number;
 };
 
-type CartRequest = {
+type CartDraft = {
     menuId: number;
-    optionIds: number[];
-    servingStyleId: number;
+    menuName: string; 
+    menuPrice: number;  
     quantity: number;
+    servingStyleId: number | null;
+    servingStyleName: string | null;
+    styleExtraPrice: number;
+    options: DraftOption[]; 
+};
+
+type CartItemRequest = {
+    menuId: number;
+    menuName: string;
+    menuPrice: number;
+    menuQuantity: number;
+    styleId: number;
+    styleName: string;
+    styleExtraPrice: number;
+    options: DraftOption[];
 };
 
 const STYLES = [
     {
         id: "simple",
         backendId: 1,
+        backendName: "SIMPLE",
         name: "심플 스타일",
         desc: "플라스틱 접시/쟁반/컵/잔, 종이 냅킨",
         price: 0,
@@ -224,6 +241,7 @@ const STYLES = [
     {
         id: "delux",
         backendId: 3,
+        backendName: "DELUXE",
         name: "디럭스 스타일",
         desc: "꽃병, 도자기 접시/컵,\n나무 쟁반, 유리잔,\n린넨 냅킨",
         price: 10000,
@@ -233,6 +251,7 @@ const STYLES = [
     {
         id: "grand",
         backendId: 2,
+        backendName: "GRAND",
         name: "그랜드 스타일",
         desc: "도자기 접시/컵, 나무 쟁반, 플라스틱 잔, 면 냅킨",
         price: 5000,
@@ -248,7 +267,7 @@ export default function StylePage() {
 
     const currentStyle = STYLES[activeIndex];
 
-    const handleSelectStyle = async () => {
+    const handleSelectStyle = async() => {
         if (typeof window === "undefined") return;
 
         // 1. cartDraft 가져오기
@@ -269,30 +288,56 @@ export default function StylePage() {
         }
         const customerId = Number(rawCustomerId);
 
-        const selectedStyle = STYLES[activeIndex];
-        const servingStyleId = selectedStyle.backendId;
+        const token = localStorage.getItem("token") ?? "";
 
-        if (!servingStyleId) {
+        const selectedStyle = STYLES[activeIndex];
+        const styleId = selectedStyle.backendId;
+        const styleName = selectedStyle.backendName;
+        const styleExtraPrice = selectedStyle.price;
+
+        if (!styleId) {
             alert("선택한 스타일이 올바르지 않습니다.");
             return;
         }
 
-        const body: CartRequest = {
+        const body: CartItemRequest = {
             menuId: draft.menuId,
-            optionIds: draft.optionIds,
-            servingStyleId,
-            quantity: draft.quantity,
+            menuName: draft.menuName,
+            menuPrice: draft.menuPrice,
+            menuQuantity: draft.quantity,
+            styleId,
+            styleName,
+            styleExtraPrice,
+            options: draft.options, 
         };
+
+        console.log("보내는 body >>>", body);
+        console.log(
+            typeof body.menuId,
+            typeof body.menuPrice,
+            typeof body.menuQuantity,
+            body.options && body.options.map(o => ({
+                optionId: o.optionId,
+                quantity: o.quantity,
+                typeId: typeof o.optionId,
+                typeQty: typeof o.quantity,
+            })),
+        );
 
         try {
             const res = await fetch(`${API_URL}/cart/${customerId}/items`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
                 credentials: "include",
                 body: JSON.stringify(body),
             });
 
             if (!res.ok) {
+                const text = await res.text();
+                console.error("장바구니 추가 실패:", res.status, text);
                 throw new Error("장바구니 추가 실패");
             }
 
