@@ -6,6 +6,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Inter } from "next/font/google";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 const inter = Inter({
     subsets: ["latin"],
     weight: ["400", "700"],
@@ -150,7 +152,7 @@ export default function LoginPage() {
         }
         
         try {
-            const res = await fetch("/api/login", {
+            const res = await fetch(`${API_URL}/auth/staff/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -167,8 +169,8 @@ export default function LoginPage() {
                 alert(data.message || "로그인에 실패했습니다.");
                 return;
             }
-
-            // 직원인지 확인
+            
+            // 직원 확인
             if ("task" in data) {
                 if (data.task === "COOK") {
                     router.push("/cookingStaff");
@@ -178,16 +180,16 @@ export default function LoginPage() {
                     router.push("/deliveringStaff");
                     return;
                 }
-                // 없으면 고객
                 router.push("/dinner");
                 return;
             }
+
             // 그 외는 고객
             router.push("/dinner");
 
         } catch (error: any) {
-            console.error("frontend error:", error);
-            alert(`프론트엔드 에러: ${error?.message || error}`);
+            console.error("error:", error);
+            alert(`에러: ${error?.message || error}`);
         }
     };
 

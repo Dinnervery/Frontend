@@ -223,7 +223,7 @@ export default function OptionPage() {
     const [qtyById, setQtyById] = useState<Record<string, number>>({});
     const [selectedOption, setSelectedOption] = useState<Record<string, boolean>>({});
 
-    const qty = (id: string) => qtyById[id] ?? 0;
+    const qty = (id: string) => qtyById[id] ?? 1;
     const [activeBox, setActiveBox] = useState<string | null>(null);
 
     const inc = (id: string) =>{
@@ -233,7 +233,7 @@ export default function OptionPage() {
 
     const dec = (id: string) => {
         setActiveBox(id);
-        setQtyById((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) - 1) }));
+        setQtyById((prev) => ({ ...prev, [id]: Math.max(1, (prev[id] ?? 1) - 1) }));
     }
 
     // 선택 상태 변경
@@ -282,7 +282,12 @@ export default function OptionPage() {
                             <OptionPrice>₩{item.price.toLocaleString("ko-KR")}</OptionPrice>
 
                             <QtyRow>
-                                <QtyButton disabled={isSelected} onClick={() => dec(item.id)}>-</QtyButton>
+                                <QtyButton 
+                                disabled={isSelected || qty(item.id) === 1}
+                                onClick={() => dec(item.id)}
+                                >
+                                    -
+                                </QtyButton>
                                 <QtyValue>{qty(item.id)}</QtyValue>
                                 <QtyButton disabled={isSelected} onClick={() => inc(item.id)}>+</QtyButton>
                             </QtyRow>
