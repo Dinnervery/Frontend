@@ -204,8 +204,74 @@ const photos = [
     { id: "valen", src: "/D-valen.png", alt: "D-valen", size: 260},
 ];
 
+const PrevOrderContainer = styled.div<{ $active: boolean }>`
+    position: fixed;
+    bottom: 0px;
+    right: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    z-index: 1000;
+`;
+
+const PrevOrderButton = styled.img`
+    width: 200px;
+    height: auto;
+    margin-right: 50px;
+    cursor: pointer;
+    display: block;
+    transition: transform 0.3s ease;
+    z-index: 888;
+
+    &:hover {
+        transform: scale(1.01);
+    }
+`;
+
+const PrevOrderBox = styled.div<{ $open: boolean}>`
+    width: 300px;
+    height: ${(p) => (p.$open ? "450px" : "0px")}; 
+    margin-top: ${(p) => (p.$open ? "-25p" : "0px")};
+    padding: ${(p) => (p.$open ? "35px 15px 30px 15px" : "0 15px")};
+    overflow: hidden;
+    z-index: 777;
+
+    background: #FDF5E6;
+    color: #4b3525;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+
+    transition:
+        height 0.4s ease,
+        padding 0.4s ease,
+        margin-top 0.4s ease;
+
+    font-family: ${inter.style.fontFamily};
+    font-size: 0.95rem;
+`;
+
+const Overlay = styled.div<{ $active: boolean }>`
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(1px);
+
+    opacity: ${(p) => (p.$active ? 1 : 0)};
+    pointer-events: ${(p) => (p.$active ? "auto" : "none")};
+
+    transition: opacity 0.3s ease;
+
+    z-index: 1000; 
+`;
+
 export default function DinnerPage() {
     const [activeIndex, setActiveIndex] = useState(0);
+    const [prevOrderActive, setPrevOrderActive] = useState(false);
     const router = useRouter();
 
     const positionOrder: PositionType[] = ["top", "right", "bottom", "left"];
@@ -213,10 +279,16 @@ export default function DinnerPage() {
     const handleSelectDinner = () => {
         const selectedDinner = photos[activeIndex];
         router.push(`/option?dinner=${selectedDinner.id}`);
-    }
+    };
+
+    const handlePrevOrderClick = () => {
+        setPrevOrderActive((prev) => !prev); 
+    };
+
 
     return (
         <Page>
+            <Overlay $active={prevOrderActive} onClick={() => setPrevOrderActive(false)} />
             <ShapeArea $mask="/Bg_shape_3.svg">
                 <Ellipse>
                     <EllipseInner>
@@ -243,6 +315,17 @@ export default function DinnerPage() {
 
             <Logo src="/Logo-brown.svg" alt="logo" />
             <LogoutButton />
+
+            <PrevOrderContainer $active={prevOrderActive}>
+                <PrevOrderButton
+                    src="/Prev-order.svg"
+                    alt="previous order"
+                    onClick={handlePrevOrderClick}
+                />
+                <PrevOrderBox $open={prevOrderActive}>
+                    이전 주문 내역 아아아아아아아아아아아아아아아아
+                </PrevOrderBox>
+            </PrevOrderContainer>
 
             <MenuWrapper>
                 <MenuButton href="/dinner" $active={true}>Dinner</MenuButton>

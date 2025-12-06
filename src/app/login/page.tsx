@@ -143,26 +143,52 @@ export default function LoginPage() {
         !signupAddress.trim();
 
     // 로그인 버튼 → Dinner 페이지 이동
-    const handleLoginClick = () => {
+    const handleLoginClick = async() => {
         if (isLoginDisabled) {
             alert("ID와 Password를 모두 입력해주세요.");
             return;
         }
         
-        // 요리 직원 로그인 
-        if (loginId === "1" && loginPassword === "1") {
-            router.push("/cookingStaff");
-            return;
-        }
+        try {
+            const res = await fetch("/api/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    loginId,
+                    password: loginPassword,
+                }),
+            });
 
-        // 배달 직원 로그인 
-        if (loginId === "2" && loginPassword === "2") {
-            router.push("/deliveryingStaff");
-            return;
-        }
+            const data = await res.json();
 
-        // 그 외
-        router.push("/dinner");
+            if (!res.ok) {
+                alert(data.message || "로그인에 실패했습니다.");
+                return;
+            }
+
+            // 직원인지 확인
+            if ("task" in data) {
+                if (data.task === "COOK") {
+                    router.push("/cookingStaff");
+                    return;
+                }
+                if (data.task === "DELIVERY") {
+                    router.push("/deliveringStaff");
+                    return;
+                }
+                // 없으면 고객
+                router.push("/dinner");
+                return;
+            }
+            // 그 외는 고객
+            router.push("/dinner");
+
+        } catch (error: any) {
+            console.error("frontend error:", error);
+            alert(`프론트엔드 에러: ${error?.message || error}`);
+        }
     };
 
     // 회원가입 버튼 → 로그인 탭으로 전환
