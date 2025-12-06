@@ -142,7 +142,24 @@ const BoxHeaderRow = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 7px;
+`;
+
+const HeaderRight = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+`;
+
+const Address = styled.div`
+    max-width: 250px;  
+    white-space: nowrap;
+    overflow: hidden;
+
+    color: #3F2316;
+
+    font-size: 14px;
+    font-weight: 500;
+    text-overflow: ellipsis;
 `;
 
 const OrderNumber = styled.div`
@@ -270,10 +287,14 @@ export default function DeliveringStaffPage() {
                     <BoxHeaderRow>
                         <OrderNumber>2</OrderNumber>
 
-                        <TimeRow>
-                            <TimeIcon>⏰</TimeIcon>
-                            <span>18:30</span>
-                        </TimeRow>
+                        <HeaderRight>
+                            <Address>서울시립대로 163 생활관 xxx호</Address>
+
+                            <TimeRow>
+                                <TimeIcon>⏰</TimeIcon>
+                                <span>18:30</span>
+                            </TimeRow>
+                        </HeaderRight>
                     </BoxHeaderRow>
 
                     <Section>
