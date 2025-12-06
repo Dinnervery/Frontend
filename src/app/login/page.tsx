@@ -148,6 +148,20 @@ export default function LoginPage() {
             alert("ID와 Password를 모두 입력해주세요.");
             return;
         }
+        
+        // 요리 직원 로그인 
+        if (loginId === "1" && loginPassword === "1") {
+            router.push("/cookingStaff");
+            return;
+        }
+
+        // 배달 직원 로그인 
+        if (loginId === "2" && loginPassword === "2") {
+            router.push("/deliveryingStaff");
+            return;
+        }
+
+        // 그 외
         router.push("/dinner");
     };
 
@@ -184,7 +198,7 @@ export default function LoginPage() {
 
             <LeftArea>
                 <Image
-                    src="/Logo_beige.svg"
+                    src="/Logo-beige.svg"
                     alt="logo"
                     width={350}
                     height={100}
