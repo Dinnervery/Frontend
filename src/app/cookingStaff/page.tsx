@@ -86,7 +86,7 @@ const StepItem = styled.div`
     gap: 2px;
 `;
 
-const StepCircle = styled.button<{ $active: boolean }>`
+const StepCircle = styled.button<{ $active: boolean; $done: boolean }>`
     width: 35px;
     height: 35px;
     display: flex;
@@ -96,8 +96,8 @@ const StepCircle = styled.button<{ $active: boolean }>`
     border-radius: 50%;
     border: 2px solid #3f2316;
     cursor: pointer;
-    background-color: ${({ $active }) => ($active ? "#ffbfbe" : "#ffffff")};
-    color: #3F2316;
+    background-color: ${({ $active, $done }) => $active ? "#ffbfbe" : $done ? "#3F2316" : "#ffffff"};
+    color: ${({ $done }) => ($done ? "#ffffff" : "#3F2316")};
     
     font-size: 20px;
     font-weight: bold;
@@ -233,7 +233,11 @@ export default function CookingStaffPage() {
             <MainWrap>
                 <StepRow>
                     <StepItem>
-                        <StepCircle $active={step === 1} onClick={() => setStep(1)}>
+                        <StepCircle
+                            $active={step === 1}
+                            $done={step > 1}
+                            onClick={() => setStep(1)}
+                        >
                             1
                         </StepCircle>
                         <StepLabel>requested</StepLabel>
@@ -242,7 +246,10 @@ export default function CookingStaffPage() {
                     <StepLine $solid={step >= 2} />
 
                     <StepItem>
-                        <StepCircle $active={step === 2} onClick={() => setStep(2)}>
+                        <StepCircle
+                            $active={step === 2}
+                            $done={step > 2} 
+                            onClick={() => setStep(2)}>
                             2
                         </StepCircle>
                         <StepLabel>cooking</StepLabel>
@@ -251,7 +258,10 @@ export default function CookingStaffPage() {
                     <StepLine $solid={step === 3} />
 
                     <StepItem>
-                        <StepCircle $active={step === 3} onClick={() => setStep(3)}>
+                        <StepCircle
+                            $active={step === 3} 
+                            $done={false}
+                            onClick={() => setStep(3)}>
                             3
                         </StepCircle>
                         <StepLabel>done</StepLabel>
