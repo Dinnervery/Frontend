@@ -77,8 +77,8 @@ const StepRow = styled.div`
 
 const StepItem = styled.div`
     position: relative;
-    width: 40px;   /* 원 크기 기준 */
-    height: 85px;  /* 원 + 텍스트 들어갈 높이 */
+    width: 35px;   /* 원 크기 기준 */
+    height: 90px;  /* 원 + 텍스트 들어갈 높이 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -106,7 +106,7 @@ const StepCircle = styled.button<{ $active: boolean }>`
 
 const StepLabel = styled.span`
     position: absolute;
-    top: 65px;
+    top: 67px;
     left: 50%;
     transform: translateX(-50%);
 
@@ -124,16 +124,101 @@ const StepLine = styled.div<{ $solid: boolean }>`
 `;
 
 const InfoBox = styled.div`
-    width: 400px;
-    height: 400px;
+    width: 380px;
+    height: 355px;
+    padding: 20px 30px;
+
     background: #ffffff;
+    color: #111;
     box-shadow: 3px 3px 20px rgba(0, 0, 0, 0.15);
     border-radius: 10px;
+
+    z-index: 1;
+
+    font-family: ${inter.style.fontFamily};
+`;
+
+const BoxHeaderRow = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 7px;
+`;
+
+const OrderNumber = styled.div`
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+    background: #3F2316;
+    color: #FFFFFF;
+
+    font-weight: 700;
+    font-size: 18px;
+`;
+
+const TimeRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    color: #b54450;
+    
+    font-weight: 700;
+    font-size: 16px;
+`;
+
+const TimeIcon = styled.span`
+    font-size: 18px;
+`;
+
+const Divider = styled.div`
+    height: 1px;
+    background: #e5e5e5;
+`;
+
+const Section = styled.div`
+    padding: 10px 0;
+`;
+
+const SectionTitle = styled.div`
+    margin-bottom: 5px;
+
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: "SOYO";
+`;
+
+const ItemRow = styled.div`
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+`;
+
+const ItemName = styled.div`
+    flex: 1;
+`;
+
+const ItemQty = styled.div`
+    width: 40px;
+    text-align: right;
 `;
 
 
-export default function CookStaffPage() {
+export default function CookingStaffPage() {
     const [step, setStep] = useState<1 | 2 | 3>(1);
+
+    const dinner = { name: "잉글리시", qty: 1 };
+    const options = [
+        { name: "바게트", qty: 2 },
+        { name: "베이컨", qty: 1 },
+        { name: "스테이크", qty: 1 },
+        { name: "에그 스크램블", qty: 1 },
+    ];
+    const style = { name: "그랜드", qty: 1 };
 
     return (
         <Page>
@@ -173,9 +258,45 @@ export default function CookStaffPage() {
                     </StepItem>
                 </StepRow>
 
-                {/* 흰색 박스(여기에 내용 채우면 됨) */}
                 <InfoBox>
-                    {/* step 값에 따라 내용 바꾸고 싶으면 여기서 분기 */}
+                    <BoxHeaderRow>
+                        <OrderNumber>2</OrderNumber>
+
+                        <TimeRow>
+                            <TimeIcon>⏰</TimeIcon>
+                            <span>18:30</span>
+                        </TimeRow>
+                    </BoxHeaderRow>
+
+                    <Section>
+                        <SectionTitle>Dinner</SectionTitle>
+                        <ItemRow>
+                            <ItemName>{dinner.name}</ItemName>
+                            <ItemQty>{dinner.qty}</ItemQty>
+                        </ItemRow>
+                    </Section>
+
+                    <Divider />
+
+                    <Section>
+                        <SectionTitle>Option</SectionTitle>
+                        {options.map((item) => (
+                            <ItemRow key={item.name}>
+                                <ItemName>{item.name}</ItemName>
+                                <ItemQty>{item.qty}</ItemQty>
+                            </ItemRow>
+                        ))}
+                    </Section>
+
+                    <Divider />
+
+                    <Section>
+                        <SectionTitle>Style</SectionTitle>
+                        <ItemRow>
+                            <ItemName>{style.name}</ItemName>
+                            <ItemQty>{style.qty}</ItemQty>
+                        </ItemRow>
+                    </Section>
                 </InfoBox>
             </MainWrap>
         </Page>
