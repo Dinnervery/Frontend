@@ -188,6 +188,17 @@ const SelectButton = styled.button<{ $selected?: boolean }>`
 type DinnerId = "valen" | "eng" | "fren" | "cham";
 type OptionItem = { id: string; src: string; alt: string; name: string; price: number };
 
+const OPTION_ID_MAP: Record<string, number> = {
+    "스테이크": 1,
+    "와인": 2,
+    "베이컨": 3,
+    "빵": 4,
+    "계란": 5,
+    "커피": 6,
+    "샐러드": 7,
+    "샴페인": 8,
+};
+
 const optionItemsByDinner: Record<DinnerId, OptionItem[]> = {
     valen: [
         { id: "steak", src: "/O-steak.png", alt: "steak", name: "스테이크", price: 15000 },
@@ -212,6 +223,16 @@ const optionItemsByDinner: Record<DinnerId, OptionItem[]> = {
         { id: "steak", src: "/O-steak.png", alt: "steak", name: "스테이크", price: 15000 },
         { id: "wine", src: "/O-wine.png", alt: "wine", name: "와인", price: 8000 },
     ],
+};
+
+// ========== API ==========
+const CART_DRAFT_KEY = "cartDraft";
+
+type CartDraft = {
+    menuId: number;
+    optionIds: number[];
+    servingStyleId: number | null;
+    quantity: number;
 };
 
 export default function OptionPage() {
@@ -245,15 +266,47 @@ export default function OptionPage() {
         }));
     };
     
-    // 모든 선택이 끝났는지 확인 -> router.push
+    // 모든 선택이 끝났는지 확인
     useEffect(() => {
         if (items.length === 0) return;
 
         const allSelected = items.every((item) => selectedOption[item.id]);
 
-        if (allSelected) {
-            router.push(`/style?dinner=${dinner}`);
+        if (!allSelected) return;
+
+        // 1. draft 가져오기
+        const raw = localStorage.getItem(CART_DRAFT_KEY);
+        if (!raw) {
+            // draft 없으면 디너부터 다시 선택하게 보내기
+            router.push("/dinner");
+            return;
         }
+
+        const draft: CartDraft = JSON.parse(raw);
+
+        // 2. 옵션 선택 + 수량 넣기
+        const optionIds: number[] = [];
+
+        items.forEach((item) => {
+            if (!selectedOption[item.id]) return;
+
+            const backendOptionId = OPTION_ID_MAP[item.name];
+            if (!backendOptionId) return;
+
+            const count = qtyById[item.id] ?? 1;
+            for (let i = 0; i < count; i++) {
+                optionIds.push(backendOptionId);
+            }
+        });
+
+        const updatedDraft: CartDraft = {
+            ...draft,
+            optionIds, 
+        };
+
+        localStorage.setItem(CART_DRAFT_KEY, JSON.stringify(updatedDraft));
+
+        router.push(`/style?dinner=${dinner}`);
     }, [items, selectedOption, router, dinner]);
 
     return (

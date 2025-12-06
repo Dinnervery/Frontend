@@ -78,7 +78,7 @@ const Card = styled.div`
     left: 5%;
     display: flex;
     flex-direction: column;
-    width: 170px;
+    width: 200px;
 
     color: #4b3525;
 
@@ -86,16 +86,16 @@ const Card = styled.div`
 `;
 
 const Price = styled.div`
-    margin-bottom: 5px;
+    margin-bottom: 7px;
 
     color: #B54450;   
 
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
 `;
 
 const Title = styled.div`
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 
     font-size: 1.7rem;
     font-weight: 700;
@@ -107,7 +107,7 @@ const Desc = styled.div`
 
     color: black;
 
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 400;
 `;
 
@@ -115,7 +115,7 @@ const SelectButton = styled.button`
     display: block;
     text-align: center;
     margin-top: 10px;
-    padding: 15px 0;
+    padding: 12px 0;
 
     cursor: pointer;
     border: none;
@@ -192,10 +192,117 @@ const stylePhotos = [
     { id: "grand", src: "/S-grand.png", alt: "grand", size: 240 },
 ];
 
+// ========== API ==========
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+const CART_DRAFT_KEY = "cartDraft";
+
+type CartDraft = {
+    menuId: number;
+    optionIds: number[];
+    servingStyleId: number | null;
+    quantity: number;
+};
+
+type CartRequest = {
+    menuId: number;
+    optionIds: number[];
+    servingStyleId: number;
+    quantity: number;
+};
+
+const STYLES = [
+    {
+        id: "simple",
+        backendId: 1,
+        name: "심플 스타일",
+        desc: "플라스틱 접시/쟁반/컵/잔, 종이 냅킨",
+        price: 0,
+        src: "/S-simple.png",
+        size: 220,
+    },
+    {
+        id: "delux",
+        backendId: 3,
+        name: "디럭스 스타일",
+        desc: "꽃병, 도자기 접시/컵,\n나무 쟁반, 유리잔,\n린넨 냅킨",
+        price: 10000,
+        src: "/S-delux.png",
+        size: 240,
+    },
+    {
+        id: "grand",
+        backendId: 2,
+        name: "그랜드 스타일",
+        desc: "도자기 접시/컵, 나무 쟁반, 플라스틱 잔, 면 냅킨",
+        price: 5000,
+        src: "/S-grand.png",
+        size: 240,
+    },
+];
+
 export default function StylePage() {
     const router = useRouter();
     const [activeIndex, setActiveIndex] = useState(0);
     const positionOrder: PositionType[] = ["top", "right", "left"];
+
+    const currentStyle = STYLES[activeIndex];
+
+    const handleSelectStyle = async () => {
+        if (typeof window === "undefined") return;
+
+        // 1. cartDraft 가져오기
+        const rawDraft = localStorage.getItem(CART_DRAFT_KEY);
+        if (!rawDraft) {
+            alert("장바구니 정보가 없습니다.");
+            router.push("/dinner");
+            return;
+        }
+
+        const draft: CartDraft = JSON.parse(rawDraft);
+
+        const rawCustomerId = localStorage.getItem("customerId");
+        if (!rawCustomerId) {
+            alert("로그인 정보가 없습니다. 다시 로그인해주세요.");
+            router.push("/login");
+            return;
+        }
+        const customerId = Number(rawCustomerId);
+
+        const selectedStyle = STYLES[activeIndex];
+        const servingStyleId = selectedStyle.backendId;
+
+        if (!servingStyleId) {
+            alert("선택한 스타일이 올바르지 않습니다.");
+            return;
+        }
+
+        const body: CartRequest = {
+            menuId: draft.menuId,
+            optionIds: draft.optionIds,
+            servingStyleId,
+            quantity: draft.quantity,
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/cart/${customerId}/items`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify(body),
+            });
+
+            if (!res.ok) {
+                throw new Error("장바구니 추가 실패");
+            }
+
+            // 성공 시 카트 페이지
+            router.push("/cart");
+        } catch (e) {
+            console.error(e);
+            alert("장바구니 추가 중 오류가 발생했습니다.");
+        }
+    };
 
     return (
         <Page>
@@ -233,10 +340,15 @@ export default function StylePage() {
             </MenuWrapper>
 
             <Card>
-                <Price>가격</Price>
-                <Title>스타일</Title>
-                <Desc>설명</Desc>
-                <SelectButton type="button" onClick={() => router.push("/cart")}>
+                <Price>
+                    ₩{currentStyle.price.toLocaleString("ko-KR")}
+                </Price>
+
+                <Title>{currentStyle.name}</Title>
+
+                <Desc>{currentStyle.desc}</Desc>
+
+                <SelectButton type="button" onClick={handleSelectStyle}>
                     스타일 선택
                 </SelectButton>
             </Card>

@@ -7,8 +7,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL
-
 const inter = Inter({
     subsets: ["latin"],
     weight: ["400", "700"],
@@ -81,7 +79,7 @@ const Card = styled.div`
     left: 72px;
     display: flex;
     flex-direction: column;
-    width: 190px;
+    width: 200px;
 
     color: #4b3525;
 
@@ -214,6 +212,13 @@ const PHOTO_MENU_ID: Record<string, number> = {
     fren: 3,
     cham: 4,
 };
+
+const MENUS: Menu[] = [
+    { menuId: 1, name: "발렌타인데이 디너", price: 50000 },
+    { menuId: 2, name: "잉글리시 디너",   price: 35000 },
+    { menuId: 3, name: "프렌치 디너",       price: 42000 },
+    { menuId: 4, name: "샴페인 디너",       price: 68000 },
+];
 
 const PrevOrderContainer = styled.div<{ $active: boolean }>`
     position: fixed;
@@ -356,6 +361,8 @@ const Overlay = styled.div<{ $active: boolean }>`
 `;
 
 // ========== API 응답 ==========
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+
 type Menu = {
     menuId: number;
     name: string;
@@ -365,8 +372,8 @@ type Menu = {
 const MENU_DESC: Record<number, string> = {
     1: "스테이크, 와인 1잔,\n하트/큐피드 접시, 냅킨",
     2: "베이컨, 바게트 1개,\n스테이크, 에그 스크램블",
-    3: "샐러드, 스테이크,\n와인 1잔, 커피",
-    4: "2인, 바게트 4개,\n샴페인 1병, 스테이크,\n와인, 커피 1포트",
+    3: "샐러드, 스테이크, 와인 1잔,\n커피",
+    4: "(2인) 바게트 4개,\n샴페인 1병, 스테이크,\n와인, 커피 1포트",
 };
 
 type OrderStatus = "COOKING" | "DELIVERING" | "DONE";
@@ -386,13 +393,22 @@ type Order = {
     options: OrderOption[];
 };
 
+const CART_DRAFT_KEY = "cartDraft";
+
+type CartDraft = {
+    menuId: number;
+    optionIds: number[];
+    servingStyleId: number | null;
+    quantity: number;
+};
+
 export default function DinnerPage() {
     const [activeIndex, setActiveIndex] = useState(0);
     const [prevOrderActive, setPrevOrderActive] = useState(false);
 
-    const [menus, setMenus] = useState<Menu[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const menus = MENUS;
+    const loading = false;
+    const error = null;
 
     const currentPhoto = photos[activeIndex];
     const currentMenuId = currentPhoto ? PHOTO_MENU_ID[currentPhoto.id] : undefined;
@@ -404,29 +420,6 @@ export default function DinnerPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [ordersLoading, setOrdersLoading] = useState(true);
     const [ordersError, setOrdersError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchMenus = async () => {
-            try {
-                const customerId = 1;
-                const res = await fetch(`${API_URL}/menus?customerId=${customerId}`, {
-                    credentials: "include",
-                });
-
-                if (!res.ok) throw new Error("메뉴 조회 실패");
-
-                const data = await res.json();
-                setMenus(data.menus ?? []);
-            } catch (e: any) {
-                console.error(e);
-                setError(e?.message ?? "오류가 발생했습니다.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchMenus();
-        }, []);
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -460,8 +453,16 @@ export default function DinnerPage() {
     const handleSelectDinner = () => {
         if (!activeMenu) return;
 
-        router.push(`/option?menuId=${activeMenu.menuId}`);
+        const draft: CartDraft = {
+            menuId: activeMenu.menuId,
+            optionIds: [],
+            servingStyleId: null,
+            quantity: 1,
+        };
+        localStorage.setItem(CART_DRAFT_KEY, JSON.stringify(draft));
+        router.push(`/option?dinner=${currentPhoto.id}`);
     };
+
 
     const handlePrevOrderClick = () => {
         setPrevOrderActive((prev) => !prev); 
