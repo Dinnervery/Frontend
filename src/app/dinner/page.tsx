@@ -406,6 +406,29 @@ export default function DinnerPage() {
     const [ordersError, setOrdersError] = useState<string | null>(null);
 
     useEffect(() => {
+        const fetchMenus = async () => {
+            try {
+                const customerId = 1;
+                const res = await fetch(`${API_URL}/menus?customerId=${customerId}`, {
+                    credentials: "include",
+                });
+
+                if (!res.ok) throw new Error("메뉴 조회 실패");
+
+                const data = await res.json();
+                setMenus(data.menus ?? []);
+            } catch (e: any) {
+                console.error(e);
+                setError(e?.message ?? "오류가 발생했습니다.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchMenus();
+        }, []);
+
+    useEffect(() => {
         const fetchOrders = async () => {
             try {
                 const customerId = 1;
