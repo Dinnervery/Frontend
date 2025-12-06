@@ -249,7 +249,7 @@ export default function InformationPage() {
                 <MenuButton href="/dinner" >Dinner</MenuButton>
                 <MenuButton href="/option">Option</MenuButton>
                 <MenuButton href="/style">Style</MenuButton>
-                <MenuButton href="/information" $active={true}>Information</MenuButton>
+                <MenuButton href="/cart" $active={true}>Cart</MenuButton>
             </MenuWrapper>
 
             <BoxContainer>

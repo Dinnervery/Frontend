@@ -124,7 +124,9 @@ const SelectButton = styled.button`
     color: white;
 
     &:hover {
-        opacity: 0.9;
+        box-shadow: inset 0 0 0 2px #3f2316;
+        background: #FFFFFF;
+        color: #3f2316;
     }
 
     font-size: 1.2rem;
@@ -227,14 +229,14 @@ export default function StylePage() {
                 <MenuButton href="/dinner">Dinner</MenuButton>
                 <MenuButton href="/option">Option</MenuButton>
                 <MenuButton href="/style" $active={true}>Style</MenuButton>
-                <MenuButton href="#" $disabled={true}>Information</MenuButton>
+                <MenuButton href="#" $disabled={true}>Cart</MenuButton>
             </MenuWrapper>
 
             <Card>
                 <Price>가격</Price>
                 <Title>스타일</Title>
                 <Desc>설명</Desc>
-                <SelectButton type="button" onClick={() => router.push("/information")}>
+                <SelectButton type="button" onClick={() => router.push("/cart")}>
                     스타일 선택
                 </SelectButton>
             </Card>

@@ -267,7 +267,7 @@ export default function OptionPage() {
                 <MenuButton href="/dinner" >Dinner</MenuButton>
                 <MenuButton href="/option" $active={true}>Option</MenuButton>
                 <MenuButton href="#" $disabled={true}>Style</MenuButton>
-                <MenuButton href="#" $disabled={true}>Information</MenuButton>
+                <MenuButton href="#" $disabled={true}>Cart</MenuButton>
             </MenuWrapper>
 
             <BoxContainer>

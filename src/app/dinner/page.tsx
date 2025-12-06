@@ -125,7 +125,9 @@ const SelectButton = styled.button`
     color: white;
 
     &:hover {
-        opacity: 0.9;
+        box-shadow: inset 0 0 0 2px #3f2316;
+        background: #FFFFFF;
+        color: #3f2316;
     }
 
     font-size: 1.2rem;
@@ -419,7 +421,7 @@ export default function DinnerPage() {
                 <MenuButton href="/dinner" $active={true}>Dinner</MenuButton>
                 <MenuButton href="/option" $disabled={true}>Option</MenuButton>
                 <MenuButton href="/style" $disabled={true}>Style</MenuButton>
-                <MenuButton href="/information" $disabled={true}>Information</MenuButton>
+                <MenuButton href="/cart" $disabled={true}>Cart</MenuButton>
             </MenuWrapper>
 
             <Card>
