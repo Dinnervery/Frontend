@@ -537,7 +537,7 @@ export default function CookingStaffPage() {
             <LogoutButton color="#3F2316" />
 
             <MenuWrapper>
-                <MenuButton href="/dinner" >재고 관리</MenuButton>
+                <MenuButton href="/stock" >재고 관리</MenuButton>
                 <MenuButton href="/cookingStaff" $active={true}>주문 내역</MenuButton>
             </MenuWrapper>
 
