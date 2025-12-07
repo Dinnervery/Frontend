@@ -84,7 +84,7 @@ const BoxRow = styled.div`
 
 const InfoBox = styled.div`
     width: 400px;
-    height: 400px;
+    height: 420px;
     padding: 15px 25px;
     margin-bottom: 25px;
 
