@@ -365,12 +365,6 @@ export default function CookingStaffPage() {
 
     useEffect(() => {
         const fetchOrders = async () => {
-            if (!API_URL) {
-                setError("API URL이 설정되어 있지 않습니다.");
-                setLoading(false);
-                return;
-            }
-
             const token =
             typeof window !== "undefined"
                 ? localStorage.getItem("staffToken")
