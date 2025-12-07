@@ -70,16 +70,6 @@ const RightContent = styled.div`
     color: #3F2316;
 `;
 
-const BackButton = styled.img`
-    width: 20px;
-    height: auto;
-    cursor: pointer;
-
-    &:hover {
-        opacity: 0.6;
-    }
-`;
-
 const Form = styled.div`
     display: flex;
     flex-direction: column;
@@ -305,12 +295,6 @@ export default function CheckoutPage() {
             <LogoutButton color="#3F2316" />
 
             <RightContent>
-                <BackButton
-                    src="/Prev-arrow.svg"
-                    alt="뒤로가기"
-                    onClick={() => router.back()}
-                />
-
                 <Form>
                     <Field>
                         <Label htmlFor="address">주소</Label>
