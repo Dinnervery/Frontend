@@ -2,11 +2,11 @@
 
 import styled from "@emotion/styled";
 import { Inter } from "next/font/google";
-import { useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import LogoutButton from "@/components/LogoutButton";
 import VipBadge from "@/components/VipBadge";
+import VoiceButton, { AiOrderResponse } from "@/components/VoiceButton";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -179,6 +179,51 @@ const SelectButton = styled.button<{ $selected?: boolean }>`
     font-size: 1.05rem;
 `;
 
+const MicWrapper = styled.div`
+    position: fixed;
+    bottom: 110px;
+    right: 40px;
+    z-index: 10000;
+`;
+
+const BottomAiBar = styled.div`
+    position: fixed;
+    bottom: 100px;
+    left: 0;
+    width: 100%;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+
+    padding: 20px 24px;
+
+    background: rgba(253, 245, 230, 0.95);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+    z-index: 9999;
+
+    font-family: "SOYO";
+`;
+
+const BottomAiLabel = styled.span`
+    color: #b54450;
+
+    white-space: nowrap;
+
+    font-weight: 700;
+    font-size: 1.5rem;
+`;
+
+const BottomAiText = styled.p`
+    margin: 0;
+    font-size: 1.3rem;
+    color: #3f2316;
+    white-space: pre-line;
+`;
+
+// ========== API ==========
 type DinnerId = "valen" | "eng" | "fren" | "cham";
 type OptionItem = { id: string; src: string; alt: string; name: string; price: number };
 
@@ -192,6 +237,11 @@ const OPTION_ID_MAP: Record<string, number> = {
     "샐러드": 7,
     "샴페인": 8,
 };
+
+const OPTION_ID_TO_NAME: { [id: number]: string } = {};
+Object.entries(OPTION_ID_MAP).forEach(([name, id]) => {
+    OPTION_ID_TO_NAME[id] = name;
+});
 
 const optionItems: Record<DinnerId, OptionItem[]> = {
     valen: [
@@ -219,7 +269,15 @@ const optionItems: Record<DinnerId, OptionItem[]> = {
     ],
 };
 
-// ========== API ==========
+type AiOrderSummaryOption = {
+    optionId: number;
+    quantity: number;
+};
+
+type AiOrderSummary = {
+    options?: AiOrderSummaryOption[] | null;
+};
+
 type DraftOption = {
     optionId: number;
     optionName: string;
@@ -241,17 +299,55 @@ type CartDraft = {
     options: DraftOption[];
 };
 
-export default function OptionPage() {
+const NAME_NORMALIZE_MAP: Record<string, string> = {
+    "바게트": "빵",
+};
+
+function normalizeOptionName(raw: string): string {
+    const trimmed = raw.trim();
+    return NAME_NORMALIZE_MAP[trimmed] ?? trimmed;
+}
+
+function parseOptionsFromReply(reply: string): { optionName: string; quantity: number }[] {
+    if (!reply) return [];
+
+    const firstSentence = reply.split(/[.。]/)[0];
+
+    const segments = firstSentence.split(",").map((s) => s.trim()).filter(Boolean);
+
+    const results: { optionName: string; quantity: number }[] = [];
+
+    segments.forEach((seg) => {
+        const match = seg.match(/(.+?)\s*(\d+)\s*[개잔병]?/);
+        if (!match) return;
+
+        const rawName = match[1].trim();
+        const qty = parseInt(match[2], 10) || 1;
+
+        const optionName = normalizeOptionName(rawName);
+
+        results.push({
+            optionName,
+            quantity: Math.max(1, qty),
+        });
+    });
+
+    return results;
+}
+
+function OptionPageInner() {
+    const [aiMessage, setAiMessage] = useState<string>("");
     const router = useRouter();
+
     const searchParams = useSearchParams();
     const dinner = (searchParams.get("dinner") ?? "") as DinnerId;
     const items = optionItems[dinner] ?? [];
 
     const [qtyById, setQtyById] = useState<Record<string, number>>({});
     const [selectedOption, setSelectedOption] = useState<Record<string, boolean>>({});
+    const [activeBox, setActiveBox] = useState<string | null>(null);
 
     const qty = (id: string) => qtyById[id] ?? 1;
-    const [activeBox, setActiveBox] = useState<string | null>(null);
 
     const inc = (id: string) => {
         setQtyById((prev) => ({
@@ -267,7 +363,6 @@ export default function OptionPage() {
         }));
     };
 
-    // 선택 상태 변경
     const onSelectClick = (id: string) => {
         setActiveBox(null);
         setSelectedOption((prev) => ({
@@ -275,16 +370,112 @@ export default function OptionPage() {
             [id]: !prev[id],
         }));
     };
-    
-    // 모든 선택이 끝났는지 확인
+
+    const handleVoiceOptionResult = (data: AiOrderResponse) => {
+        console.log("🔊 Option AI response:", data); 
+
+        if (!data.success) {
+            const msg = data.error ?? "AI 옵션 요청에 실패했습니다.";
+            setAiMessage(msg);
+            alert(msg);
+            return;
+        }
+
+        const result = data.result;
+        if (!result) {
+            setAiMessage("AI 응답이 비어 있습니다.");
+            alert("AI 응답이 비어 있습니다.");
+            return;
+        }
+
+        setAiMessage(result.reply ?? "");
+
+        const parsed = parseOptionsFromReply(result.reply ?? "");
+        console.log("parsed options from reply:", parsed);
+
+        if (parsed.length === 0) {
+            alert("옵션을 다시 말해줘!");
+            return;
+        }
+
+        const allowedNames = new Set(items.map((item) => item.name));
+        const draftOptions: DraftOption[] = [];
+
+        parsed.forEach(({ optionName, quantity }) => {
+            if (!allowedNames.has(optionName)) {
+                console.warn("현재 디너에 없는 옵션, 무시:", optionName);
+                return;
+            }
+
+            const item = items.find((i) => i.name === optionName);
+            if (!item) {
+                console.warn("옵션 Item을 찾지 못했습니다:", optionName);
+                return;
+            }
+
+            const backendOptionId = OPTION_ID_MAP[item.name];
+            if (!backendOptionId) {
+                console.warn("옵션 ID 매핑 실패:", item.name);
+                return;
+            }
+
+            const safeQty = Math.max(1, Number(quantity) || 1);
+
+            draftOptions.push({
+                optionId: backendOptionId,
+                optionName: item.name,
+                optionPrice: item.price,
+                defaultQty: 1,
+                quantity: safeQty,
+            });
+
+            setQtyById((prev) => ({
+                ...prev,
+                [item.id]: safeQty,
+            }));
+            setSelectedOption((prev) => ({
+                ...prev,
+                [item.id]: true,
+            }));
+        });
+
+        if (draftOptions.length === 0) {
+            alert("옵션을 찾지 못했어요.");
+            return;
+        }
+
+        if (typeof window === "undefined") return;
+
+        const raw = localStorage.getItem(CART_DRAFT_KEY);
+        if (!raw) {
+            alert("디너를 먼저 선택해주세요.");
+            router.push("/dinner");
+            return;
+        }
+
+        try {
+            const draft: CartDraft = JSON.parse(raw);
+
+            const updatedDraft: CartDraft = {
+                ...draft,
+                options: draftOptions,
+            };
+
+            localStorage.setItem(CART_DRAFT_KEY, JSON.stringify(updatedDraft));
+
+            router.push(`/style?dinner=${dinner}`);
+        } catch (e) {
+            console.error("cartDraft 파싱 실패:", e);
+            alert("장바구니 정보를 불러오지 못했습니다. 다시 시도해주세요.");
+        }
+    };
+
     useEffect(() => {
         if (items.length === 0) return;
 
         const allSelected = items.every((item) => selectedOption[item.id]);
-
         if (!allSelected) return;
 
-        // 1. draft 가져오기
         const raw = localStorage.getItem(CART_DRAFT_KEY);
         if (!raw) {
             router.push("/dinner");
@@ -293,7 +484,6 @@ export default function OptionPage() {
 
         const draft: CartDraft = JSON.parse(raw);
 
-        // 2. 옵션 선택 + 수량 넣기
         const options: DraftOption[] = [];
 
         items.forEach((item) => {
@@ -312,13 +502,13 @@ export default function OptionPage() {
                 optionName: item.name,
                 optionPrice: item.price,
                 defaultQty: 1,
-                quantity,     
+                quantity,
             });
         });
 
         const updatedDraft: CartDraft = {
             ...draft,
-            options, 
+            options,
         };
 
         localStorage.setItem(CART_DRAFT_KEY, JSON.stringify(updatedDraft));
@@ -346,16 +536,16 @@ export default function OptionPage() {
                     const isSelected = !!selectedOption[item.id];
                     const isActive = activeBox === item.id;
 
-                    return(
+                    return (
                         <OptionBox key={item.id} $active={isActive}>
                             <OptionImage src={item.src} alt={item.alt} />
                             <OptionName>{item.name}</OptionName>
                             <OptionPrice>₩{item.price.toLocaleString("ko-KR")}</OptionPrice>
 
                             <QtyRow>
-                                <QtyButton 
-                                disabled={isSelected || qty(item.id) === 1}
-                                onClick={() => dec(item.id)}
+                                <QtyButton
+                                    disabled={isSelected || qty(item.id) === 1}
+                                    onClick={() => dec(item.id)}
                                 >
                                     -
                                 </QtyButton>
@@ -363,11 +553,40 @@ export default function OptionPage() {
                                 <QtyButton disabled={isSelected} onClick={() => inc(item.id)}>+</QtyButton>
                             </QtyRow>
 
-                            <SelectButton $selected={isSelected} onClick={() => onSelectClick(item.id)}>{isSelected ? "취소" : "선택"}</SelectButton>
+                            <SelectButton
+                                $selected={isSelected}
+                                onClick={() => onSelectClick(item.id)}
+                            >
+                                {isSelected ? "취소" : "선택"}
+                            </SelectButton>
                         </OptionBox>
                     );
                 })}
             </BoxContainer>
+
+            <MicWrapper>
+                <VoiceButton
+                    onResult={handleVoiceOptionResult as any}
+                    onError={(msg) => alert(msg)}
+                    iconSrc="/Voice.svg"
+                    iconSize={45}
+                />
+            </MicWrapper>
+
+            <BottomAiBar>
+                <BottomAiLabel>AI</BottomAiLabel>
+                <BottomAiText>
+                    {aiMessage || "옵션의 수량을 말해주세요."}
+                </BottomAiText>
+            </BottomAiBar>
         </Page>
+    );
+}
+
+export default function OptionPage() {
+    return (
+        <Suspense fallback={<div>옵션 불러오는 중...</div>}>
+            <OptionPageInner />
+        </Suspense>
     );
 }

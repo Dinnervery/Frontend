@@ -22,8 +22,6 @@ const VoiceButtonRoot = styled.button`
     align-items: center;
     justify-content: center;
 
-    /* padding, border-radius 등은 그대로 둬도 되고 빼도 됨
-       이미지 자체로 버튼처럼 보이면 나중에 조절해도 돼 */
     padding: 0;
     border: none;
     background: transparent;
@@ -50,7 +48,7 @@ const VoiceIcon = styled.img`
 `;
 
 type VoiceOrderButtonProps = {
-    onResult?: (result: AiOrderResult) => void;
+    onResult?: (result: AiOrderResponse) => void;
     onError?: (message: string) => void;
     disabled?: boolean;
     iconSize?: number;
@@ -68,12 +66,11 @@ export default function VoiceOrderButton({
 }: VoiceOrderButtonProps) {
     const [loading, setLoading] = useState(false);
 
-    // 텍스트를 서버로 보내는 로직만 따로 분리
     const sendTextToServer = async (text: string) => {
         try {
             const token = localStorage.getItem("token");
             if (!token) {
-                const msg = "로그인 정보가 없습니다. 다시 로그인해주세요.";
+                const msg = "로그인 정보가 없습니다.";
                 onError ? onError(msg) : alert(msg);
                 return;
             }
@@ -99,16 +96,14 @@ export default function VoiceOrderButton({
             const data: AiOrderResponse = await res.json();
             console.log("AI 주문 응답:", data);
 
-            if (!data.success || !data.result) {
-                const msg = data.error ?? "음성 주문 처리에 실패했습니다.";
-                onError ? onError(msg) : alert(msg);
-                return;
-            }
-
             if (!onResult) {
-                alert(data.result.reply);
+                const msg =
+                    data.result?.reply ||
+                    data.error ||
+                    "음성 주문 처리에 실패했습니다.";
+                onError ? onError(msg) : alert(msg);
             } else {
-                onResult(data.result);
+                onResult(data);
             }
         } catch (e) {
             console.error(e);

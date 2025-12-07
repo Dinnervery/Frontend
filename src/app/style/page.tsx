@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import LogoutButton from "@/components/LogoutButton";
 import VipBadge from "@/components/VipBadge";
+import VoiceButton from "@/components/VoiceButton";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -186,7 +187,68 @@ const stylePhotos = [
     { id: "grand", src: "/S-grand.png", alt: "grand", size: 240 },
 ];
 
+const MicWrapper = styled.div`
+    position: fixed;
+    bottom: 110px;
+    right: 40px;
+    z-index: 10000;
+`;
+
+const BottomAiBar = styled.div`
+    position: fixed;
+    bottom: 100px;
+    left: 0;
+    width: 100%;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+
+    padding: 20px 24px;
+
+    background: rgba(253, 245, 230, 0.95);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+    z-index: 9999;
+
+    font-family: "SOYO";
+`;
+
+const BottomAiLabel = styled.span`
+    color: #b54450;
+
+    white-space: nowrap;
+
+    font-weight: 700;
+    font-size: 1.5rem;
+`;
+
+const BottomAiText = styled.p`
+    margin: 0;
+    font-size: 1.3rem;
+    color: #3f2316;
+    white-space: pre-line;
+`;
+
 // ========== API ==========
+type AiState = "ordering" | "confirming" | "completed";
+
+type BackendAiResult = {
+    reply: string;
+    state: AiState;
+    orderSummary?: {
+        menuId?: number;
+        menuName?: string;
+        quantity?: number;
+    } | null;
+};
+
+type BackendAiResponse = {
+    success: boolean;
+    result: BackendAiResult | null;
+    error: string | null;
+};
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const CART_DRAFT_KEY = "cartDraft";
@@ -220,6 +282,26 @@ type CartItemRequest = {
     styleExtraPrice: number;
     options: DraftOption[];
 };
+
+type StyleId = "simple" | "delux" | "grand";
+
+function detectStyleFromReply(reply: string): StyleId | null {
+    if (!reply) return null;
+
+    const text = reply.toLowerCase();
+
+    if (text.includes("심플") || text.includes("simple")) {
+        return "simple";
+    }
+    if (text.includes("디럭스") || text.includes("디룩스") || text.includes("delux") || text.includes("deluxe")) {
+        return "delux";
+    }
+    if (text.includes("그랜드") || text.includes("grand")) {
+        return "grand";
+    }
+
+    return null;
+}
 
 const STYLES = [
     {
@@ -258,10 +340,11 @@ export default function StylePage() {
     const router = useRouter();
     const [activeIndex, setActiveIndex] = useState(0);
     const positionOrder: PositionType[] = ["top", "right", "left"];
+    const [aiMessage, setAiMessage] = useState<string>("");
 
     const currentStyle = STYLES[activeIndex];
 
-    const handleSelectStyle = async() => {
+    const handleSelectStyle = async(styleOverride?: (typeof STYLES)[number]) => {
         if (typeof window === "undefined") return;
 
         // 1. cartDraft 가져오기
@@ -284,7 +367,7 @@ export default function StylePage() {
 
         const token = localStorage.getItem("token") ?? "";
 
-        const selectedStyle = STYLES[activeIndex];
+        const selectedStyle = styleOverride ?? STYLES[activeIndex];
         const styleId = selectedStyle.backendId;
         const styleName = selectedStyle.name;
         const styleExtraPrice = selectedStyle.price;
@@ -338,6 +421,63 @@ export default function StylePage() {
         }
     };
 
+    const handleVoiceStyleResult = (raw: unknown) => {
+        console.log("🔊 Style AI raw:", raw);
+
+        const parsed = raw as BackendAiResponse | BackendAiResult;
+
+        const maybeEnvelope = parsed as BackendAiResponse;
+        const envelope: BackendAiResponse | null =
+            typeof maybeEnvelope === "object" &&
+            maybeEnvelope !== null &&
+            typeof maybeEnvelope.success === "boolean"
+                ? maybeEnvelope
+                : null;
+
+        const result: BackendAiResult | null = envelope
+            ? envelope.result
+            : (parsed as BackendAiResult);
+
+        console.log("🔊 Style parsed result:", result);
+
+        if (envelope && !envelope.success) {
+            const msg = envelope.error ?? "AI 스타일 요청에 실패했습니다.";
+            setAiMessage(msg);
+            alert(msg);
+            return;
+        }
+
+        if (!result) {
+            setAiMessage("AI 응답이 비어 있습니다.");
+            alert("AI 응답이 비어 있습니다.");
+            return;
+        }
+
+        const replyText = result.reply ?? "";
+        setAiMessage(replyText);
+
+        const styleId = detectStyleFromReply(replyText);
+        console.log("🔍 detected styleId from reply:", styleId);
+
+        if (!styleId) {
+            alert("스타일을 다시 말해줘!");
+            return;
+        }
+
+        const style = STYLES.find((s) => s.id === styleId);
+        if (!style) {
+            console.warn("STYLES에서 스타일을 찾지 못했습니다:", styleId);
+            return;
+        }
+
+        const idx = STYLES.findIndex((s) => s.id === styleId);
+        if (idx >= 0) {
+            setActiveIndex(idx);
+        }
+
+        handleSelectStyle(style);
+    };
+
     return (
         <Page>
             <ShapeArea $mask="/Bg_shape_3.svg">
@@ -383,10 +523,29 @@ export default function StylePage() {
 
                 <Desc>{currentStyle.desc}</Desc>
 
-                <SelectButton type="button" onClick={handleSelectStyle}>
+                <SelectButton
+                    type="button"
+                    onClick={() => handleSelectStyle()}
+                >
                     스타일 선택
                 </SelectButton>
             </Card>
+
+            <MicWrapper>
+                <VoiceButton
+                    onResult={handleVoiceStyleResult as any}
+                    onError={(msg) => alert(msg)}
+                    iconSrc="/Voice.svg"
+                    iconSize={45}
+                />
+            </MicWrapper>
+
+            <BottomAiBar>
+                <BottomAiLabel>AI</BottomAiLabel>
+                <BottomAiText>
+                    {aiMessage || "원하는 스타일을 말해보세요."}
+                </BottomAiText>
+            </BottomAiBar>
         </Page>
     );
 }

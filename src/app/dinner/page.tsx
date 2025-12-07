@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 import VipBadge from "@/components/VipBadge";
-import VoiceButton, { AiOrderResult, } from "@/components/VoiceButton";
+import VoiceButton, { AiOrderResponse, } from "@/components/VoiceButton";
 
 const ActionRow = styled.div`
     display: flex;
@@ -221,7 +221,7 @@ const PrevOrderContainer = styled.div<{ $active: boolean }>`
     flex-direction: column;
     align-items: flex-end;
 
-    z-index: 1000;
+    z-index: 10001;
 `;
 
 const PrevOrderButton = styled.img`
@@ -364,7 +364,7 @@ const Overlay = styled.div<{ $active: boolean }>`
 
 const BottomAiBar = styled.div`
     position: fixed;
-    bottom: 0;
+    bottom: 100px;
     left: 0;
     width: 100%;
 
@@ -376,6 +376,7 @@ const BottomAiBar = styled.div`
 
     background: rgba(253, 245, 230, 0.95);
     border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
     z-index: 10000;
 
@@ -538,22 +539,27 @@ type CartItemRequest = {
     options: CartItemOptionRequest[];
 };
 
-type AiState = "ordering" | "confirming" | "completed";
-
-type BackendAiResult = {
-    reply: string;
-    state: AiState;
-    orderSummary?: {
-        menuId?: number;
-        menuName?: string;
-        quantity?: number;
-    } | null;
+type AiOrderSummaryOption = {
+    optionId: number;
+    quantity: number;
 };
 
-type BackendAiResponse = {
-    success: boolean;
-    result: BackendAiResult | null;
-    error: string | null;
+type AiOrderSummary = {
+    menuId?: number;
+    menuName?: string;
+    quantity?: number;
+    styleId?: number | null;
+    styleName?: string | null;
+    options?: AiOrderSummaryOption[] | null;
+};
+
+const inferMenuIdFromText = (text: string): number | null => {
+    const t = (text ?? "").replace(/\s+/g, "");
+    if (t.includes("샴페인")) return 4;
+    if (t.includes("발렌타인")) return 1;
+    if (t.includes("잉글리시") || t.includes("영국")) return 2;
+    if (t.includes("프렌치") || t.includes("프랑스")) return 3;
+    return null;
 };
 
 export default function DinnerPage() {
@@ -569,7 +575,7 @@ export default function DinnerPage() {
     const currentPhoto = photos[activeIndex];
     const currentMenuId = currentPhoto ? PHOTO_MENU_ID[currentPhoto.id] : undefined;
     const activeMenu = currentMenuId
-        ? menus.find((menu) => menu.menuId === currentMenuId)
+        ? menus.find   ((menu) => menu.menuId === currentMenuId)
         : undefined;
     const desc = activeMenu ? MENU_DESC[activeMenu.menuId] : "";
 
@@ -664,61 +670,57 @@ export default function DinnerPage() {
     const router = useRouter();
     const positionOrder: PositionType[] = ["top", "right", "bottom", "left"];
 
-    const handleVoiceDinnerResult = (raw: unknown) => {
-        const parsed = raw as BackendAiResponse | BackendAiResult;
+    const handleVoiceDinnerResult = (data: AiOrderResponse) => {
+        console.log("🔊 AI response:", data);
+        console.log("🔊 AI success:", data.success);
+        console.log("🔊 AI result:", data.result);
+        console.log("🔊 AI orderSummary:", data.result?.orderSummary);
 
-        // 케이스 A: { success, result, error } 래퍼 형태
-        const maybeEnvelope = parsed as BackendAiResponse;
-        const envelope: BackendAiResponse | null =
-            typeof maybeEnvelope === "object" &&
-            maybeEnvelope !== null &&
-            typeof maybeEnvelope.success === "boolean"
-                ? maybeEnvelope
-                : null;
-
-        // 케이스 B: result만 바로 내려주는 형태(혹시 몰라서)
-        const result: BackendAiResult | null = envelope
-            ? envelope.result
-            : (parsed as BackendAiResult);
-
-        if (envelope && !envelope.success) {
-            const msg = envelope.error ?? "AI 요청에 실패했습니다.";
+        if (!data.success) {
+            const msg = data.error ?? "AI 요청에 실패했습니다.";
             setAiMessage(msg);
             alert(msg);
             return;
         }
 
+        const result = data.result;
         if (!result) {
             setAiMessage("AI 응답이 비어 있습니다.");
             alert("AI 응답이 비어 있습니다.");
             return;
         }
 
-        // 1) 화면 하단 AI 메시지 업데이트
         setAiMessage(result.reply ?? "");
 
-        const state = result.state;
+        const summaryRaw = result.orderSummary as AiOrderSummary | null;
 
-        // state별 분기
-        if (state === "confirming") {
+        const summary: AiOrderSummary = summaryRaw ?? {
+            menuId: undefined,
+            menuName: undefined,
+            quantity: 1,
+            styleId: null,
+            styleName: null,
+            options: null,
+        };
+
+        let menuId: number | null = summary?.menuId ?? null;
+
+        if (!menuId) menuId = inferMenuIdFromText(result.reply);
+
+        if (!menuId) {
+            alert("메뉴를 특정하지 못했어요. '샴페인 디너'처럼 말해줘!");
             return;
         }
 
-        const summary = result.orderSummary ?? null;
-
-        if (!summary?.menuId) {
-            alert("디너 선택 시, 다음 창으로 넘어갑니다 🤤");
-            return;
-        }
-
-        const menuId = summary.menuId;
-        const qty = Math.max(1, Number(summary.quantity ?? 1) || 1);
+        const qty = Math.max(1, Number(summary?.quantity ?? 1) || 1);
 
         const menuMeta = MENUS.find((m) => m.menuId === menuId);
         if (!menuMeta) {
             alert("해당 디너 정보를 찾을 수 없습니다.");
             return;
         }
+
+        setAiMessage(result.reply ?? "");
 
         const photo = photos.find((p) => PHOTO_MENU_ID[p.id] === menuId);
         if (!photo) {
@@ -729,15 +731,53 @@ export default function DinnerPage() {
         const index = photos.findIndex((p) => p.id === photo.id);
         if (index !== -1) setActiveIndex(index);
 
+        let servingStyleId: number | null = null;
+        let servingStyleName: string | null = null;
+        let styleExtraPrice = 0;
+
+        if (summary.styleId != null || summary.styleName) {
+            const styleMeta = STYLES.find((s) => {
+                if (summary.styleId != null) return s.backendId === summary.styleId;
+                if (summary.styleName) return s.backendName === summary.styleName;
+                return false;
+            });
+
+            if (styleMeta) {
+                servingStyleId = styleMeta.backendId;
+                servingStyleName = styleMeta.backendName;
+                styleExtraPrice = styleMeta.price;
+            }
+        }
+
+        const optionDrafts: CartItemOptionRequest[] = Array.isArray(summary.options)
+            ? summary.options
+                .map((opt: AiOrderSummaryOption) => {
+                    const meta = OPTION_META.find((m) => m.optionId === opt.optionId);
+                    if (!meta) {
+                        console.warn("옵션 메타데이터를 찾을 수 없습니다:", opt.optionId);
+                        return null;
+                    }
+
+                    return {
+                        optionId: meta.optionId,
+                        optionName: meta.name,
+                        optionPrice: meta.price,
+                        defaultQty: meta.defaultQty,
+                        quantity: opt.quantity ?? meta.defaultQty,
+                    };
+                })
+                .filter((o): o is CartItemOptionRequest => o !== null)
+            : [];
+
         const draft: CartDraft = {
             menuId: menuMeta.menuId,
             menuName: menuMeta.name,
             menuPrice: menuMeta.price,
             quantity: qty, 
-            servingStyleId: null,
-            servingStyleName: null,
-            styleExtraPrice: 0,
-            options: [],
+            servingStyleId,
+            servingStyleName,
+            styleExtraPrice,
+            options: optionDrafts,
         };
 
         localStorage.setItem(CART_DRAFT_KEY, JSON.stringify(draft));
@@ -1013,7 +1053,7 @@ export default function DinnerPage() {
                     </SelectButton>
 
                     <VoiceButton
-                        onResult={handleVoiceDinnerResult as any}
+                        onResult={handleVoiceDinnerResult}
                         onError={(msg) => alert(msg)}
                         iconSrc="/Voice.svg"
                         iconSize={45}
@@ -1024,7 +1064,7 @@ export default function DinnerPage() {
             <BottomAiBar>
                 <BottomAiLabel>AI</BottomAiLabel>
                 <BottomAiText>
-                    {aiMessage || "마이크 버튼을 눌러 주문을 말해보세요."}
+                    {aiMessage || "마이크 버튼을 눌러, 원하는 디너를 말해주세요."}
                 </BottomAiText>
             </BottomAiBar>
         </Page>
