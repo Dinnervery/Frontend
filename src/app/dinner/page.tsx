@@ -438,23 +438,6 @@ type CartItemOptionResponse = {
     unitPrice: number;
 };
 
-type CartItemResponse = {
-    cartItemId: number;
-    menu: {
-        menuId: number;
-        name: string;
-        quantity: number;
-        unitPrice: number;
-    };
-    style: {
-        styleId: number;
-        name: string;
-        price: number;
-    };
-    options: CartItemOptionResponse[];
-    totalAmount: number;
-};
-
 export default function DinnerPage() {
     const [activeIndex, setActiveIndex] = useState(0);
     const [prevOrderActive, setPrevOrderActive] = useState(false);
@@ -505,22 +488,23 @@ export default function DinnerPage() {
 
                 const rawCustomerId =
                     localStorage.getItem("customerId") || localStorage.getItem("userId");
+                
+                console.log("rawCustomerId:", rawCustomerId);
+
                 if (!rawCustomerId) {
                     setOrdersError("로그인 정보가 없습니다.");
-                    setOrdersLoading(false);
                     return;
                 }
 
                 const customerId = Number(rawCustomerId);
                 if (Number.isNaN(customerId)) {
                     setOrdersError("로그인 정보가 올바르지 않습니다.");
-                    setOrdersLoading(false);
                     return;
                 }
 
                 const token = localStorage.getItem("token");
 
-                console.log("🔍 API 요청 시작");
+                console.log("주문 조회 API 요청");
                 console.log("API_URL:", API_URL);
                 console.log("customerId:", customerId);
                 console.log("token:", token);
@@ -533,15 +517,11 @@ export default function DinnerPage() {
                     credentials: "include",
                 });
 
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    console.error("주문 조회 실패:", res.status, errorText);
-                    throw new Error("주문 조회 실패");
-                }
+                const data = await res.json() as { orders: Order[] };
+                console.log("이전 주문 내역 응답 data:", data);
+                console.log("Array.isArray(data):", Array.isArray(data));
 
-                const data = await res.json();
-
-                setOrders(data);
+                setOrders(Array.isArray(data) ? data : []);
             } catch (e: any) {
                 console.error(e);
                 setOrdersError(e?.message ?? "오류가 발생했습니다.");

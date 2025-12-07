@@ -284,13 +284,18 @@ export default function CartPage() {
 
         const fetchCart = async () => {
             try {
+                const token = localStorage.getItem("token");  
+
                 const res = await fetch(`${API_URL}/cart/${rawCustomerId}`, {
-                    method: "GET",
-                    credentials: "include",
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token ?? ""}`, 
+                },
+                credentials: "include",
                 });
 
                 if (!res.ok) {
-                    throw new Error("장바구니 조회 실패");
+                throw new Error("장바구니 조회 실패");
                 }
 
                 const data: CartResponse = await res.json();
