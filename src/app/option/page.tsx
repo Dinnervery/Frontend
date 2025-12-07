@@ -259,15 +259,19 @@ export default function OptionPage() {
     const qty = (id: string) => qtyById[id] ?? 1;
     const [activeBox, setActiveBox] = useState<string | null>(null);
 
-    const inc = (id: string) =>{
-        setActiveBox(id);
-        setQtyById((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }));
-    }
+    const inc = (id: string) => {
+        setQtyById((prev) => ({
+            ...prev,
+            [id]: (prev[id] ?? 1) + 1
+        }));
+    };
 
     const dec = (id: string) => {
-        setActiveBox(id);
-        setQtyById((prev) => ({ ...prev, [id]: Math.max(1, (prev[id] ?? 1) - 1) }));
-    }
+        setQtyById((prev) => ({
+            ...prev,
+            [id]: Math.max(1, (prev[id] ?? 1) - 1)
+        }));
+    };
 
     // 선택 상태 변경
     const onSelectClick = (id: string) => {
