@@ -79,8 +79,8 @@ const BoxRow = styled.div`
 `;
 
 const InfoBox = styled.div`
-    width: 400px;
-    height: 420px;
+    width: 415px;
+    height: 440px;
     padding: 15px 25px;
     margin-bottom: 25px;
 
@@ -248,12 +248,31 @@ const TotalAmount = styled.div`
     font-weight: 700;
 `;
 
+const PriceWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.2;
+`;
+
+const OriginalPrice = styled.div`
+    font-size: 0.95rem;
+    color: black;
+    text-decoration: line-through;
+    opacity: 0.3;
+`;
+
+const DiscountedPrice = styled.div`
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #b54450;
+`;
+
 const ButtonRow = styled.div`
     display: flex;
     gap: 16px;
     justify-content: center;
     align-items: center;
-    margin-top: 10px;
 `;
 
 const AddButton = styled.button`
@@ -633,18 +652,15 @@ export default function CartPage() {
                                         <TotalLabel>총 금액</TotalLabel>
                                         <TotalAmount>
                                             {isVip ? (
-                                                <div
-                                                    style={{
-                                                        fontSize: "1.15rem",
-                                                        fontWeight: 700,
-                                                        color: "#B54450", 
-                                                    }}
-                                                    title="VIP 할인가!" // 툴팁
-                                                >
-                                                    ₩{discountedTotal.toLocaleString("ko-KR")}
-                                                </div>
+                                                <PriceWrapper>
+                                                    <OriginalPrice>
+                                                        ₩{originalTotal.toLocaleString("ko-KR")}
+                                                    </OriginalPrice>
+                                                    <DiscountedPrice>
+                                                        ₩{discountedTotal.toLocaleString("ko-KR")}
+                                                    </DiscountedPrice>
+                                                </PriceWrapper>
                                             ) : (
-                                                // 일반 고객
                                                 <>₩{originalTotal.toLocaleString("ko-KR")}</>
                                             )}
                                         </TotalAmount>
