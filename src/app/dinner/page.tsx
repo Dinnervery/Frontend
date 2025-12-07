@@ -243,8 +243,10 @@ const PrevOrderBox = styled.div<{ $open: boolean}>`
     height: ${(p) => (p.$open ? "450px" : "0px")}; 
     margin-top: ${(p) => (p.$open ? "-25px" : "0px")};
     padding: ${(p) => (p.$open ? "35px 15px 30px 15px" : "0 15px")};
-    overflow: hidden;
     z-index: 777;
+
+    overflow-y: ${(p) => (p.$open ? "auto" : "hidden")};
+    overflow-x: hidden;
 
     background: #FDF5E6;
     color: #4b3525;
@@ -357,7 +359,7 @@ const Overlay = styled.div<{ $active: boolean }>`
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 const MENUS: Menu[] = [
-    { menuId: 1, name: "발렌타인데이 디너", price: 50000 },
+    { menuId: 1, name: "발렌타인 디너", price: 50000 },
     { menuId: 2, name: "잉글리시 디너",   price: 35000 },
     { menuId: 3, name: "프렌치 디너",       price: 42000 },
     { menuId: 4, name: "샴페인 디너",       price: 68000 },
@@ -517,11 +519,19 @@ export default function DinnerPage() {
                     credentials: "include",
                 });
 
-                const data = await res.json() as { orders: Order[] };
-                console.log("이전 주문 내역 응답 data:", data);
-                console.log("Array.isArray(data):", Array.isArray(data));
+                if (!res.ok) {
+                    throw new Error("주문 내역 조회에 실패했습니다.");
+                }
 
-                setOrders(Array.isArray(data) ? data : []);
+                type OrdersResponse = {
+                    orders: Order[];
+                };
+                const data: OrdersResponse = await res.json();
+
+                console.log("이전 주문 내역 응답 data:", data);
+                console.log("Array.isArray(data):", Array.isArray(data.orders));
+
+                setOrders(Array.isArray(data.orders) ? data.orders : []);
             } catch (e: any) {
                 console.error(e);
                 setOrdersError(e?.message ?? "오류가 발생했습니다.");
@@ -618,20 +628,22 @@ export default function DinnerPage() {
                                     <ItemDesc>
                                         {order.orderItems
                                             .map((item) => {
-                                            const optionText = item.options?.length
-                                                ? item.options
-                                                    .map((o) => `${o.name} x${o.quantity}`)
-                                                    .join(", ")
-                                                : "";
+                                                const optionsText = item.options?.length
+                                                    ? item.options
+                                                        .map((o) => `${o.name} ${o.quantity}`)
+                                                        .join(", ")
+                                                    : "";
 
-                                            const base = `${item.name} x${item.quantity}`;
-                                            const style = item.styleName ? ` (${item.styleName})` : "";
+                                                const baseText = `${item.name} ${item.quantity}개`;
+                                                
+                                                const styleText = item.styleName ? `, ${item.styleName}` : "";
 
-                                            return optionText
-                                                ? `${base}${style}\n옵션: ${optionText}`
-                                                : `${base}${style}`;
+                                                if (optionsText) {
+                                                    return `${baseText}(${optionsText})${styleText}`;
+                                                }
+                                                return `${baseText}${styleText}`;
                                             })
-                                            .join("\n\n")}
+                                            .join("\n")}
                                         </ItemDesc>
 
                                     {order.status === "DONE" && order.deliveryTime && (

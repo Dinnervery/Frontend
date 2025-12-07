@@ -367,6 +367,7 @@ export default function DeliveringStaffPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null); 
 
     const [page, setPage] = useState(0);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -375,6 +376,61 @@ export default function DeliveringStaffPage() {
 
     const boxRowRef = useRef<HTMLDivElement | null>(null);
     const isAnimating = useRef(false);
+
+    const updateOrderStatus = async (
+        orderId: number,
+        nextStatus: OrderStatus
+    ) => {
+        const current = orders.find((o) => o.orderId === orderId);
+        // 같은 상태면 호출 안 함
+        if (!current || current.status === nextStatus) return;
+
+        const token =
+            typeof window !== "undefined"
+                ? localStorage.getItem("staffToken")
+                : null;
+
+        if (!token) {
+            setError("로그인 정보가 없습니다.");
+            return;
+        }
+
+        try {
+            setUpdatingOrderId(orderId);
+
+            const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ status: nextStatus }),
+            });
+
+            const data: { orderId: number; status: OrderStatus } =
+                await res.json();
+
+            if (!res.ok) {
+                console.error("updateOrderStatus error:", data);
+                setError("주문 상태를 변경하지 못했습니다.");
+                return;
+            }
+
+            setError(null);
+            setOrders((prev) =>
+                prev
+                    .map((o) =>
+                    o.orderId === orderId ? { ...o, status: nextStatus } : o
+                    )
+                    .filter((o) => o.status !== "DONE")
+            );
+        } catch (e) {
+            console.error("update delivery status error:", e);
+            setError("주문 상태를 변경하지 못했습니다.");
+        } finally {
+            setUpdatingOrderId(null);
+        }
+    };
 
     const getStepFromStatus = (status: Order["status"] | undefined): Step => {
         if (status === "DELIVERING") return 2;
@@ -545,6 +601,8 @@ export default function DeliveringStaffPage() {
                                                 <StepCircle
                                                     $active={step === 1}
                                                     $done={step > 1}
+                                                    disabled={updatingOrderId === order.orderId || step > 1}
+                                                    onClick={() => updateOrderStatus(order.orderId, "COOKED")}
                                                 >
                                                     1
                                                 </StepCircle>
@@ -557,6 +615,8 @@ export default function DeliveringStaffPage() {
                                                 <StepCircle
                                                     $active={step === 2}
                                                     $done={step > 2}
+                                                    disabled={updatingOrderId === order.orderId || step > 2}
+                                                    onClick={() => updateOrderStatus(order.orderId, "DELIVERING")}
                                                 >
                                                     2
                                                 </StepCircle>
@@ -569,6 +629,8 @@ export default function DeliveringStaffPage() {
                                                 <StepCircle
                                                     $active={step === 3}
                                                     $done={false}
+                                                    disabled={updatingOrderId === order.orderId || step === 3}
+                                                    onClick={() => updateOrderStatus(order.orderId, "DONE")}
                                                 >
                                                     3
                                                 </StepCircle>
