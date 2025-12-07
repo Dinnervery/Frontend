@@ -1,11 +1,11 @@
 "use client";
 
 import styled from "@emotion/styled";
-import Link from "next/link";
 import { Inter } from "next/font/google";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
+import VipBadge from "@/components/VipBadge";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -758,6 +758,7 @@ export default function DinnerPage() {
 
             <Logo src="/Logo-brown.svg" alt="logo" />
             <LogoutButton />
+            <VipBadge />
 
             <PrevOrderContainer $active={prevOrderActive}>
                 <PrevOrderButton

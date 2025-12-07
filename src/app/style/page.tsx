@@ -1,11 +1,11 @@
 "use client";
 
 import styled from "@emotion/styled";
-import Link from "next/link";
 import { Inter } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import LogoutButton from "@/components/LogoutButton";
+import VipBadge from "@/components/VipBadge";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -365,6 +365,7 @@ export default function StylePage() {
             <Logo src="/Logo-brown.svg" alt="logo" />
 
             <LogoutButton />
+            <VipBadge />
 
             <MenuWrapper>
                 <MenuButton>Dinner</MenuButton>

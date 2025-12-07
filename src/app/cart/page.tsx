@@ -1,12 +1,13 @@
 "use client";
 
 import styled from "@emotion/styled";
-import Link from "next/link";
 import { Inter } from "next/font/google";
 import LogoutButton from "@/components/LogoutButton";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { gsap } from "gsap";
+import VipBadge from "@/components/VipBadge";
+import { useVip } from "@/hooks/useVip";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -345,6 +346,7 @@ export default function CartPage() {
     const [cart, setCart] = useState<CartResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { isVip } = useVip();
 
     // 페이지별 카드 2개
     const [page, setPage] = useState(0);
@@ -537,7 +539,9 @@ export default function CartPage() {
         <Page>
             <BgShape src="/Bg_shape_3.svg" alt="bg shape 3" />
             <Logo src="/Logo-brown.svg" alt="logo" />
+
             <LogoutButton />
+            <VipBadge />
 
             <MenuWrapper>
                 <MenuButton>Dinner</MenuButton>
@@ -567,6 +571,10 @@ export default function CartPage() {
                                 0
                             );
                             const total = dinnerPrice + stylePrice + optionsTotal;
+
+                            const originalTotal = total;
+                            const discountedTotal = isVip ? Math.floor(originalTotal * 0.9) : originalTotal;
+                            const discountAmount = isVip ? originalTotal - discountedTotal : 0;
 
                             return (
                                 <InfoBox key={cartItem.cartItemId}>
@@ -624,7 +632,21 @@ export default function CartPage() {
                                     <TotalRow>
                                         <TotalLabel>총 금액</TotalLabel>
                                         <TotalAmount>
-                                            ₩{total.toLocaleString("ko-KR")}
+                                            {isVip ? (
+                                                <div
+                                                    style={{
+                                                        fontSize: "1.15rem",
+                                                        fontWeight: 700,
+                                                        color: "#B54450", 
+                                                    }}
+                                                    title="VIP 할인가!" // 툴팁
+                                                >
+                                                    ₩{discountedTotal.toLocaleString("ko-KR")}
+                                                </div>
+                                            ) : (
+                                                // 일반 고객
+                                                <>₩{originalTotal.toLocaleString("ko-KR")}</>
+                                            )}
                                         </TotalAmount>
                                     </TotalRow>
                                 </InfoBox>

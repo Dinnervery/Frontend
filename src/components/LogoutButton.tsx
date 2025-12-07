@@ -11,8 +11,8 @@ const inter = Inter({
 
 const Button = styled.button<{ $color?: string }>`
     position: absolute;
-    top: 4%;
-    right: 4%;
+    top: 40px;
+    right: 50px;
     background: none;
     border: none;
     padding: 0;

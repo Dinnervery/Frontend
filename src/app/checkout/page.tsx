@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import LogoutButton from "@/components/LogoutButton";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import VipBadge from "@/components/VipBadge";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -292,7 +293,9 @@ export default function CheckoutPage() {
                 <Title>주문 정보</Title>
             </LeftArea>
             <Logo src="/Logo-beige.svg" alt="logo" />
+
             <LogoutButton color="#3F2316" />
+            <VipBadge />
 
             <RightContent>
                 <Form>
