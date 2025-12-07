@@ -97,14 +97,15 @@ const Label = styled.label`
 `;
 
 const Input = styled.input`
-    border: none;
-    border-bottom: 1px solid #3F2316;
-    background: transparent;
     padding: 10px 0;
     margin: 0 0 10px 0;
 
-    font-size: 16px;
-    font-family: "SOYO", sans-serif;
+    border: none;
+    border-bottom: 1px solid #3F2316;
+    background: transparent;
+
+    font-size: 18px;
+    font-family: ${inter.style.fontFamily};
     outline: none;
 `;
 
@@ -114,7 +115,7 @@ const TimeField = styled.div`
     flex-direction: column;
 `;
 
-const TimeSelect = styled.select`
+const TimeSelect = styled.select<{ $selected: boolean }>`
     padding: 10px 0;
     margin: 0 0 10px 0;
 
@@ -123,15 +124,16 @@ const TimeSelect = styled.select`
     border: none;
     border-bottom: 1px solid #3F2316;
     background: transparent;
-    color: rgba(63, 35, 22, 0.2);
+    color: ${({ $selected }) =>
+        $selected ? "#3F2316" : "rgba(63, 35, 22, 0.2)"};
     cursor: pointer;
 
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
 
-    font-size: 16px;
-    font-family: "SOYO", sans-serif;
+    font-size: 18px;
+    font-family: ${inter.style.fontFamily};
 `;
 
 const TimeArrow = styled.img`
@@ -158,16 +160,31 @@ const PayButton = styled.button<{ $disabled?: boolean }>`
     opacity: ${({ $disabled }) => ($disabled ? 0.3 : 1)};
 `;
 
+// ========== API ==========
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+type OrderResponse = {
+    orderId: number;
+    customerId: number;
+    status: string;
+    totalPrice: number;
+    orderItems: any[];
+    createdAt: string;
+    deliveryTime: string;
+};
+
 export default function CheckoutPage() {
     const router = useRouter();
 
     const [address, setAddress] = useState("");
     const [card, setCard] = useState("");
     const [time, setTime] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    const isDisabled = !address || !card || !time;
+    const isDisabled = !address || !card || !time || loading;
 
     const [timeOptions, setTimeOptions] = useState<string[]>([]);
+    const selectRef = useRef<HTMLSelectElement | null>(null);
     // const [orderAvailable, setOrderAvailable] = useState(true);
 
     useEffect(() => {
@@ -227,15 +244,56 @@ export default function CheckoutPage() {
         setTime(""); // 사용자가 직접 선택
     }, []);
 
-    const selectRef = useRef<HTMLSelectElement | null>(null);
-
-    const handlePayClick = () => {
+    const handlePayClick = async() => {
         if (isDisabled){
             alert("주문 정보를 모두 입력해주세요.");
             return;
         }
 
-        alert("결제가 완료되었습니다!");
+        const token = localStorage.getItem("token");
+        const customerId = localStorage.getItem("customerId");
+
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            router.push("/login");
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const response = await fetch(`${API_URL}/orders`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    customerId: Number(customerId),
+                    address,
+                    cardNumber: card,
+                    deliveryTime: time,
+                }),
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.error("Order API error:", text);
+                alert("결제에 실패했습니다.");
+                return;
+            }
+
+            const data: OrderResponse = await response.json();
+            console.log("order response:", data);
+
+            alert(`결제가 완료되었습니다 🥰`);
+            router.push("/dinner");
+        } catch (error) {
+            console.error(error);
+            alert("결제 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -281,6 +339,7 @@ export default function CheckoutPage() {
                                 ref={selectRef}
                                 value={time}
                                 onChange={(e) => setTime(e.target.value)}
+                                $selected={time !== ""}
                             >
                                 <option value="">시간 선택</option>
                                 {timeOptions.map((opt) => (
@@ -300,7 +359,9 @@ export default function CheckoutPage() {
                     $disabled={isDisabled}
                     disabled={isDisabled}
                     onClick={handlePayClick}
-                >결제하기</PayButton>
+                >
+                    {loading ? "결제 중..." : "결제하기"}
+                </PayButton>
             </RightContent>
         </Page>
     );
