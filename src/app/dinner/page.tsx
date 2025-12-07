@@ -6,6 +6,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 import VipBadge from "@/components/VipBadge";
+import VoiceButton, { AiOrderResult, } from "@/components/VoiceButton";
+
+const ActionRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+`;
 
 const inter = Inter({
     subsets: ["latin"],
@@ -105,6 +112,7 @@ const Desc = styled.div`
 `;
 
 const SelectButton = styled.button`
+    width: 180px; 
     display: block;
     text-align: center;
     margin-top: 10px;
@@ -354,6 +362,42 @@ const Overlay = styled.div<{ $active: boolean }>`
     z-index: 1000; 
 `;
 
+const BottomAiBar = styled.div`
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+
+    padding: 20px 24px;
+
+    background: rgba(253, 245, 230, 0.95);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+    z-index: 10000;
+
+    font-family: font-family: "SOYO";
+`;
+
+const BottomAiLabel = styled.span`
+    color: #b54450;
+
+    white-space: nowrap;
+
+    font-weight: 700;
+    font-size: 1.5rem;
+`;
+
+const BottomAiText = styled.p`
+    margin: 0;
+    font-size: 1.3rem;
+    color: #3f2316;
+    white-space: pre-line;
+`;
+
 // ========== API 응답 ==========
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -494,11 +538,29 @@ type CartItemRequest = {
     options: CartItemOptionRequest[];
 };
 
+type AiState = "ordering" | "confirming" | "completed";
+
+type BackendAiResult = {
+    reply: string;
+    state: AiState;
+    orderSummary?: {
+        menuId?: number;
+        menuName?: string;
+        quantity?: number;
+    } | null;
+};
+
+type BackendAiResponse = {
+    success: boolean;
+    result: BackendAiResult | null;
+    error: string | null;
+};
+
 export default function DinnerPage() {
+    const [aiMessage, setAiMessage] = useState<string>("");
     const [activeIndex, setActiveIndex] = useState(0);
     const [prevOrderActive, setPrevOrderActive] = useState(false);
     const [reorderLoadingId, setReorderLoadingId] = useState<number | null>(null);
-
 
     const menus = MENUS;
     const loading = false;
@@ -601,6 +663,86 @@ export default function DinnerPage() {
 
     const router = useRouter();
     const positionOrder: PositionType[] = ["top", "right", "bottom", "left"];
+
+    const handleVoiceDinnerResult = (raw: unknown) => {
+        const parsed = raw as BackendAiResponse | BackendAiResult;
+
+        // 케이스 A: { success, result, error } 래퍼 형태
+        const maybeEnvelope = parsed as BackendAiResponse;
+        const envelope: BackendAiResponse | null =
+            typeof maybeEnvelope === "object" &&
+            maybeEnvelope !== null &&
+            typeof maybeEnvelope.success === "boolean"
+                ? maybeEnvelope
+                : null;
+
+        // 케이스 B: result만 바로 내려주는 형태(혹시 몰라서)
+        const result: BackendAiResult | null = envelope
+            ? envelope.result
+            : (parsed as BackendAiResult);
+
+        if (envelope && !envelope.success) {
+            const msg = envelope.error ?? "AI 요청에 실패했습니다.";
+            setAiMessage(msg);
+            alert(msg);
+            return;
+        }
+
+        if (!result) {
+            setAiMessage("AI 응답이 비어 있습니다.");
+            alert("AI 응답이 비어 있습니다.");
+            return;
+        }
+
+        // 1) 화면 하단 AI 메시지 업데이트
+        setAiMessage(result.reply ?? "");
+
+        const state = result.state;
+
+        // state별 분기
+        if (state === "confirming") {
+            return;
+        }
+
+        const summary = result.orderSummary ?? null;
+
+        if (!summary?.menuId) {
+            alert("디너 선택 시, 다음 창으로 넘어갑니다 🤤");
+            return;
+        }
+
+        const menuId = summary.menuId;
+        const qty = Math.max(1, Number(summary.quantity ?? 1) || 1);
+
+        const menuMeta = MENUS.find((m) => m.menuId === menuId);
+        if (!menuMeta) {
+            alert("해당 디너 정보를 찾을 수 없습니다.");
+            return;
+        }
+
+        const photo = photos.find((p) => PHOTO_MENU_ID[p.id] === menuId);
+        if (!photo) {
+            alert("해당 디너 이미지를 찾을 수 없습니다.");
+            return;
+        }
+
+        const index = photos.findIndex((p) => p.id === photo.id);
+        if (index !== -1) setActiveIndex(index);
+
+        const draft: CartDraft = {
+            menuId: menuMeta.menuId,
+            menuName: menuMeta.name,
+            menuPrice: menuMeta.price,
+            quantity: qty, 
+            servingStyleId: null,
+            servingStyleName: null,
+            styleExtraPrice: 0,
+            options: [],
+        };
+
+        localStorage.setItem(CART_DRAFT_KEY, JSON.stringify(draft));
+        router.push(`/option?dinner=${photo.id}`);
+    };
 
     const handleSelectDinner = () => {
         if (!activeMenu) return;
@@ -861,10 +1003,30 @@ export default function DinnerPage() {
                     {!loading && !error && activeMenu && (desc || "설명 준비 중...")}
                 </Desc>
 
-                <SelectButton type="button" onClick={handleSelectDinner} disabled={!activeMenu}>
-                    디너 선택
-                </SelectButton>
+                <ActionRow>
+                    <SelectButton
+                        type="button"
+                        onClick={handleSelectDinner}
+                        disabled={!activeMenu}
+                    >
+                        디너 선택
+                    </SelectButton>
+
+                    <VoiceButton
+                        onResult={handleVoiceDinnerResult as any}
+                        onError={(msg) => alert(msg)}
+                        iconSrc="/Voice.svg"
+                        iconSize={45}
+                    />
+                </ActionRow>
             </Card>
+
+            <BottomAiBar>
+                <BottomAiLabel>AI</BottomAiLabel>
+                <BottomAiText>
+                    {aiMessage || "마이크 버튼을 눌러 주문을 말해보세요."}
+                </BottomAiText>
+            </BottomAiBar>
         </Page>
     );
 }
