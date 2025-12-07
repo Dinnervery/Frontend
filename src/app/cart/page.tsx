@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Inter } from "next/font/google";
 import LogoutButton from "@/components/LogoutButton";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { gsap } from "gsap";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -74,17 +75,81 @@ const BoxContainer = styled.div`
     position: relative;
 `;
 
+const BoxRow = styled.div`
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    justify-content: center;
+`;
+
 const InfoBox = styled.div`
     width: 400px;
     height: 400px;
     padding: 15px 25px;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 
     background: #FFFFFF;
     box-shadow: 3px 3px 20px rgba(0, 0, 0, 0.15);
     border-radius: 10px;
 
     z-index: 1;
+`;
+
+const LeftHoverArea = styled.div`
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 150px;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 40px;
+
+    background: transparent;
+    z-index: 9999;
+`;
+
+const RightHoverArea = styled.div`
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 150px;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 40px;
+
+    background: transparent;
+    z-index: 9999;
+`;
+
+const ArrowButton = styled.button<{ $visible: boolean }>`
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 999px;
+    border: none;
+    color: #FFBFBE;
+    cursor: pointer;
+    background: transparent;
+
+    opacity: ${(p) => (p.$visible ? 1 : 0)};
+    pointer-events: ${(p) => (p.$visible ? "auto" : "none")};
+    transition: opacity 0.2s;
+    
+    font-size: 10rem;
+`;
+
+const PageIndicator = styled.div`
+    margin-bottom: 15px;
+    font-size: 1.15rem;
+    color: white;
+    opacity: 1;
 `;
 
 const InnerContainer = styled.div`
@@ -272,7 +337,15 @@ export default function CartPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const firstItem = cart?.cartItems[0];
+    // 페이지별 카드 2개
+    const [page, setPage] = useState(0);
+    const [showLeftArrow, setShowLeftArrow] = useState(false);
+    const [showRightArrow, setShowRightArrow] = useState(false); 
+    const cardsPerPage = 2;
+
+    // 카드 애니메이션
+    const boxRowRef = useRef<HTMLDivElement | null>(null);
+    const isAnimating = useRef(false);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -288,22 +361,21 @@ export default function CartPage() {
             try {
                 const token = localStorage.getItem("token");  
 
-                const res = await fetch(`${API_URL}/cart/${rawCustomerId}`, {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${token ?? ""}`, 
-                },
-                credentials: "include",
+                    const res = await fetch(`${API_URL}/cart/${rawCustomerId}`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token ?? ""}`, 
+                    },
+                    credentials: "include",
                 });
 
                 if (!res.ok) {
-                throw new Error("장바구니 조회 실패");
+                    throw new Error("장바구니 조회 실패");
                 }
 
                 const data: CartResponse = await res.json();
                 
                 console.log("장바구니 API 응답:", data);
-
                 if (Array.isArray(data?.cartItems)) {
                     data.cartItems.forEach((item, index) => {
                         console.log(`\n[${index}] cartItemId:`, item.cartItemId);
@@ -321,45 +393,89 @@ export default function CartPage() {
                 setLoading(false);
             }
         };
-
         fetchCart();
     }, [router]);
+
+    useEffect(() => {
+        if (!boxRowRef.current) return;
+
+        gsap.fromTo(
+            boxRowRef.current,
+            { x: 50, opacity: 0 },
+            {
+                x: 0,
+                opacity: 1,
+                duration: 0.25,
+                ease: "power2.out",
+                onComplete: () => {
+                    isAnimating.current = false;
+                },
+            }
+        );
+    }, [page]);
 
     if (loading) {
         return <Page>장바구니 로딩 중...</Page>;
     }
 
-    if (error || !firstItem) {
+    if (error || !cart || cart.cartItems.length === 0) {
         return <Page>장바구니에 담긴 항목이 없습니다.</Page>;
     }
 
-    const dinner = firstItem.dinnerItem;
-    const options = firstItem.options || [];
-    const style = firstItem.style;
+    // 카드 배치 처리
+    const totalPages = Math.ceil(cart.cartItems.length / cardsPerPage);
+    const currentItems = cart.cartItems.slice(
+        page * cardsPerPage,
+        page * cardsPerPage + cardsPerPage
+    );
 
-    // 디너/스타일은 한 카드 내 무조건 1개
-    const dinnerPrice = dinner.unitPrice;
-    const stylePrice = style.extraPrice ?? 0;
+    const handleNextPage = () => {
+        if (totalPages <= 1 || isAnimating.current) return;
+        if (page >= totalPages - 1) return;
+        if(!boxRowRef.current) return;
+
+        isAnimating.current = true;
+
+        gsap.to(boxRowRef.current, {
+            x: -50,
+            opacity: 0,
+            duration: 0.25,
+            ease: "power2.out",
+            onComplete: () => {
+                setPage((prev) => Math.min(prev + 1, totalPages - 1));
+            },
+        });
+    };
+
+    const handlePrevPage = () => {
+        if (totalPages <= 1 || isAnimating.current) return;
+        if (page <= 0) return; 
+        if (!boxRowRef.current) return;
+
+        isAnimating.current = true;
+
+        gsap.to(boxRowRef.current, {
+            x: 50,
+            opacity: 0,
+            duration: 0.25,
+            ease: "power2.out",
+            onComplete: () => {
+                setPage((prev) => Math.max(prev - 1, 0));
+            },
+        });
+    };
 
     const calcOptionExtraPrice = (o: CartOption) => {
         const extraCount = Math.max(o.quantity - o.defaultQty, 0);
         return extraCount * o.unitPrice;
     };
 
-    const optionsTotal = options.reduce(
-        (sum, o) => sum + calcOptionExtraPrice(o),
-        0
-    );
-
-    const total = dinnerPrice + stylePrice + optionsTotal;
-
     const handleAddClick = () => {
         if (typeof window !== "undefined") {
             localStorage.removeItem(CART_DRAFT_KEY);
         }
-        router.push("/dinner"); // 새 디너 선택
+        router.push("/dinner");
     };
-
 
     return (
         <Page>
@@ -376,75 +492,133 @@ export default function CartPage() {
 
             <BoxContainer>
                 <InnerContainer>
-                    <InfoBox>
-                        <InfoHeader>
-                            <InfoTitle>주문 내역</InfoTitle>
-                            <EditButton onClick={() => router.push("/dinner")}>수정하기</EditButton>
-                        </InfoHeader>
-                        
-                        <Divider />
+                    {totalPages > 1 && (
+                        <PageIndicator>
+                            {page + 1} / {totalPages}
+                        </PageIndicator>
+                    )}
 
-                        <Section>
-                            <SectionTitle>Dinner</SectionTitle>
-                            <ItemRow>
-                                <ItemName>{dinner.name}</ItemName>
-                                <ItemQty>1</ItemQty>
-                                <ItemPrice>
-                                    ₩{dinnerPrice.toLocaleString("ko-KR")}
-                                </ItemPrice>
-                            </ItemRow>
-                        </Section>
+                    <BoxRow ref={boxRowRef}>
+                        {currentItems.map((cartItem) => {
+                            const dinner = cartItem.dinnerItem;
+                            const options = cartItem.options || [];
+                            const style = cartItem.style;
 
-                        <Divider />
+                            const dinnerPrice = dinner.unitPrice;
+                            const stylePrice = style.extraPrice ?? 0;
+                            const optionsTotal = options.reduce(
+                                (sum, o) => sum + calcOptionExtraPrice(o),
+                                0
+                            );
+                            const total = dinnerPrice + stylePrice + optionsTotal;
 
-                        <Section>
-                            <SectionTitle>Option</SectionTitle>
-                            {options.map((item) => {
-                                const extraCount = Math.max(item.quantity - item.defaultQty, 0);
-                                const optionExtraPrice = calcOptionExtraPrice(item);
+                            return (
+                                <InfoBox key={cartItem.cartItemId}>
+                                    <InfoHeader>
+                                        <InfoTitle>주문 내역</InfoTitle>
+                                        <EditButton onClick={() => router.push("/dinner")}>
+                                            수정하기
+                                        </EditButton>
+                                    </InfoHeader>
 
-                                return (
-                                    <ItemRow key={item.optionId}>
-                                        <ItemName>{item.name}</ItemName>
-                                        {/* 선택 수량 */}
-                                        <ItemQty>{item.quantity}</ItemQty>
-                                        {/* 추가 금액 */}
-                                        <ItemPrice>
-                                            ₩{optionExtraPrice.toLocaleString("ko-KR")}
-                                        </ItemPrice>
-                                    </ItemRow>
-                                );
-                            })}
-                        </Section>
+                                    <Divider />
 
-                        <Divider />
+                                    <Section>
+                                        <SectionTitle>Dinner</SectionTitle>
+                                        <ItemRow>
+                                            <ItemName>{dinner.name}</ItemName>
+                                            <ItemQty>1</ItemQty>
+                                            <ItemPrice>
+                                                ₩{dinnerPrice.toLocaleString("ko-KR")}
+                                            </ItemPrice>
+                                        </ItemRow>
+                                    </Section>
 
-                        <Section>
-                            <SectionTitle>Style</SectionTitle>
-                            <ItemRow>
-                                <ItemName>{style.name}</ItemName>
-                                <ItemQty>1</ItemQty>
-                                <ItemPrice>
-                                    ₩{stylePrice.toLocaleString("ko-KR")}
-                                </ItemPrice>
-                            </ItemRow>
-                        </Section>
+                                    <Divider />
 
-                        <TotalRow>
-                            <TotalLabel>총 금액</TotalLabel>
-                            <TotalAmount>₩{total.toLocaleString("ko-KR")}</TotalAmount>
-                        </TotalRow>
-                    </InfoBox>
+                                    <Section>
+                                        <SectionTitle>Option</SectionTitle>
+                                        {options.map((item) => {
+                                            const optionExtraPrice = calcOptionExtraPrice(item);
+                                            return (
+                                                <ItemRow key={item.optionId}>
+                                                    <ItemName>{item.name}</ItemName>
+                                                    <ItemQty>{item.quantity}</ItemQty>
+                                                    <ItemPrice>
+                                                        ₩{optionExtraPrice.toLocaleString("ko-KR")}
+                                                    </ItemPrice>
+                                                </ItemRow>
+                                            );
+                                        })}
+                                    </Section>
 
-                    <OrderButton onClick={() => router.push("/checkout")}>주문하기</OrderButton>
+                                    <Divider />
+
+                                    <Section>
+                                        <SectionTitle>Style</SectionTitle>
+                                        <ItemRow>
+                                            <ItemName>{style.name}</ItemName>
+                                            <ItemQty>1</ItemQty>
+                                            <ItemPrice>
+                                                ₩{stylePrice.toLocaleString("ko-KR")}
+                                            </ItemPrice>
+                                        </ItemRow>
+                                    </Section>
+
+                                    <TotalRow>
+                                        <TotalLabel>총 금액</TotalLabel>
+                                        <TotalAmount>
+                                            ₩{total.toLocaleString("ko-KR")}
+                                        </TotalAmount>
+                                    </TotalRow>
+                                </InfoBox>
+                            );
+                        })}
+                    </BoxRow>
+
+                    <OrderButton onClick={() => router.push("/checkout")}>
+                        주문하기
+                    </OrderButton>
 
                     <AddButton
-                            src="/I-add.png"
-                            alt="추가"
-                            onClick={handleAddClick}
+                        src="/I-add.png"
+                        alt="추가"
+                        onClick={handleAddClick}
                     />
                 </InnerContainer>
             </BoxContainer>
+
+            {/* 왼쪽 화살표 */}
+            {totalPages > 1 && page > 0 && (
+                <LeftHoverArea
+                    onMouseEnter={() => setShowLeftArrow(true)}
+                    onMouseLeave={() => setShowLeftArrow(false)}
+                >
+                    <ArrowButton
+                        $visible={showLeftArrow}
+                        onClick={handlePrevPage}
+                        aria-label="이전 카드"
+                    >
+                        ‹
+                    </ArrowButton>
+                </LeftHoverArea>
+            )}
+
+            {/* 오른쪽 화살표 */}
+            {totalPages > 1 && page < totalPages - 1 && (
+                <RightHoverArea
+                    onMouseEnter={() => setShowRightArrow(true)}
+                    onMouseLeave={() => setShowRightArrow(false)}
+                >
+                    <ArrowButton
+                        $visible={showRightArrow}
+                        onClick={handleNextPage}
+                        aria-label="다음 카드"
+                    >
+                        ›
+                    </ArrowButton>
+                </RightHoverArea>
+            )}
         </Page>
     );
 }
