@@ -50,21 +50,16 @@ const MenuWrapper = styled.div`
     z-index: 999;
 `;
 
-const MenuButton = styled(Link, {
-    shouldForwardProp: (prop) => prop !== "$active",   
-})<{ $active?: boolean }>`
+const MenuButton = styled.span<{ $active?: boolean }>`
+    cursor: pointer;
+    color: white;
+
     font-size: 1.7rem;
     font-weight: 700;
     text-decoration: none;
-    cursor: pointer;
     font-family: ${inter.style.fontFamily};
-    
-    color: white;
-    opacity: ${(props) => (props.$active ? 1.0 : 0.6)};
 
-    &:hover {
-        opacity: 1.0;
-    }
+    opacity: ${(props) => (props.$active ? 1.0 : 0.6)};
 `;
 
 const BoxContainer = styled.div`
@@ -545,10 +540,10 @@ export default function CartPage() {
             <LogoutButton />
 
             <MenuWrapper>
-                <MenuButton href="/dinner" >Dinner</MenuButton>
-                <MenuButton href="/option">Option</MenuButton>
-                <MenuButton href="/style">Style</MenuButton>
-                <MenuButton href="/cart" $active={true}>Cart</MenuButton>
+                <MenuButton>Dinner</MenuButton>
+                <MenuButton>Option</MenuButton>
+                <MenuButton>Style</MenuButton>
+                <MenuButton $active={true}>Cart</MenuButton>
             </MenuWrapper>
 
             <BoxContainer>

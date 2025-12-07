@@ -54,18 +54,10 @@ const MenuWrapper = styled.div`
     z-index: 999;
 `;
 
-const MenuButton = styled(Link, {
-    shouldForwardProp: (prop) => prop !== '$active' && prop !== '$disabled',
-})<{ $active?: boolean; $disabled?: boolean }>`
-    cursor: ${(p) => (p.$disabled ? "default" : "pointer")};
+const MenuButton = styled.span<{ $active?: boolean; }>`
+    cursor: default;
     color: white;
     opacity: ${(props) => (props.$active ? 1.0 : 0.6)};
-
-    &:hover {
-        opacity: ${(p) => (p.$disabled ? 0.6 : 1.0)};
-    }
-
-    pointer-events: ${(p) => (p.$disabled ? "none" : "auto")};
 
     font-family: ${inter.style.fontFamily};
     font-size: 1.7rem;
@@ -846,10 +838,10 @@ export default function DinnerPage() {
             </PrevOrderContainer>
 
             <MenuWrapper>
-                <MenuButton href="/dinner" $active={true}>Dinner</MenuButton>
-                <MenuButton href="/option" $disabled={true}>Option</MenuButton>
-                <MenuButton href="/style" $disabled={true}>Style</MenuButton>
-                <MenuButton href="/cart" $disabled={true}>Cart</MenuButton>
+                <MenuButton $active={true}>Dinner</MenuButton>
+                <MenuButton>Option</MenuButton>
+                <MenuButton>Style</MenuButton>
+                <MenuButton>Cart</MenuButton>
             </MenuWrapper>
 
             <Card>

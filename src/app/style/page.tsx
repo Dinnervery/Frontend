@@ -54,17 +54,11 @@ const MenuWrapper = styled.div`
     z-index: 999;
 `;
 
-const MenuButton = styled(Link, {
-    shouldForwardProp: (prop) => prop !== "$active" && prop !== "$disabled",   
-})<{ $active?: boolean; $disabled?: boolean }>`
-    cursor: ${(p) => (p.$disabled ? "default" : "pointer")};
+const MenuButton = styled.span<{ $active?: boolean }>`
+    cursor: default;
     color: white;
-    opacity: ${(props) => (props.$active ? 1.0 : 0.6)};
-    pointer-events: ${(p) => (p.$disabled ? "none" : "auto")};
 
-    &:hover {
-        opacity: ${(p) => (p.$disabled ? 0.6 : 1.0)};
-    }
+    opacity: ${(props) => (props.$active ? 1.0 : 0.6)};
 
     font-size: 1.7rem;
     font-weight: 700;
@@ -373,10 +367,10 @@ export default function StylePage() {
             <LogoutButton />
 
             <MenuWrapper>
-                <MenuButton href="/dinner">Dinner</MenuButton>
-                <MenuButton href="/option">Option</MenuButton>
-                <MenuButton href="/style" $active={true}>Style</MenuButton>
-                <MenuButton href="#" $disabled={true}>Cart</MenuButton>
+                <MenuButton>Dinner</MenuButton>
+                <MenuButton>Option</MenuButton>
+                <MenuButton $active={true}>Style</MenuButton>
+                <MenuButton>Cart</MenuButton>
             </MenuWrapper>
 
             <Card>
