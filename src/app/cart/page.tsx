@@ -492,10 +492,9 @@ export default function CartPage() {
         try {
             const token = localStorage.getItem("token");
 
-            const res = await fetch(`${API_URL}/cart/${rawCustomerId}/items`, {
+            const res = await fetch(`${API_URL}/cart/${rawCustomerId}/items?cartItemId=${cartItemId}`, {
                 method: "DELETE",
                 headers: {
-                    "Content-Type": "application/json",
                     "Authorization": `Bearer ${token ?? ""}`,
                 },
                 credentials: "include",
