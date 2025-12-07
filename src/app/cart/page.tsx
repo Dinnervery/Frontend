@@ -226,34 +226,36 @@ const OrderButton = styled.button`
 
 // ========== API ==========
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 const CART_DRAFT_KEY = "cartDraft";
 
-type CartOption = {
-    optionId: number;
-    name: string;  
-    defaultQty: number;
-    extraPrice: number; 
-};
-
-type ServingStyle = {
-    servingStyleId: number;
-    name: string;
-    price: number;
-};
-
-type DinnerItem = {
+type CartDinnerItem = {
     menuId: number;
     name: string;
     quantity: number;
-    unitPrice: number;  
-    options: CartOption[];
-    servingStyle: ServingStyle;
+    unitPrice: number;
+};
+
+type CartOption = {
+    optionId: number;
+    name: string;
+    quantity: number;
+    defaultQty: number;
+    unitPrice: number;
+    extraPrice: number;
+};
+
+type CartStyle = {
+    styleId: number;
+    name: string;
+    extraPrice: number;
 };
 
 type CartItem = {
     cartItemId: number;
-    dinnerItem: DinnerItem;
+    dinnerItem: CartDinnerItem; 
+    style: CartStyle;
+    options: CartOption[];
+    totalAmount: number;
 };
 
 type CartResponse = {
@@ -299,6 +301,18 @@ export default function CartPage() {
                 }
 
                 const data: CartResponse = await res.json();
+                
+                console.log("장바구니 API 응답:", data);
+
+                if (Array.isArray(data?.cartItems)) {
+                    data.cartItems.forEach((item, index) => {
+                        console.log(`\n[${index}] cartItemId:`, item.cartItemId);
+                        console.log("dinner:", item.dinnerItem);
+                        console.log("options:", item.options);
+                        console.log("style:", item.style);
+                    });
+                }
+
                 setCart(data);
             } catch (e) {
                 console.error(e);
@@ -312,7 +326,7 @@ export default function CartPage() {
     }, [router]);
 
     if (loading) {
-        return <Page>로딩 중...</Page>;
+        return <Page>장바구니 로딩 중...</Page>;
     }
 
     if (error || !firstItem) {
@@ -320,17 +334,24 @@ export default function CartPage() {
     }
 
     const dinner = firstItem.dinnerItem;
-    const options = dinner.options || [];
-    const style = dinner.servingStyle;
+    const options = firstItem.options || [];
+    const style = firstItem.style;
 
-    const dinnerTotal = dinner.unitPrice * dinner.quantity;
+    // 디너/스타일은 한 카드 내 무조건 1개
+    const dinnerPrice = dinner.unitPrice;
+    const stylePrice = style.extraPrice ?? 0;
+
+    const calcOptionExtraPrice = (o: CartOption) => {
+        const extraCount = Math.max(o.quantity - o.defaultQty, 0);
+        return extraCount * o.unitPrice;
+    };
+
     const optionsTotal = options.reduce(
-        (sum, o) => sum + o.extraPrice * o.defaultQty,
+        (sum, o) => sum + calcOptionExtraPrice(o),
         0
     );
-    const styleTotal = style.price ?? 0;
 
-    const total = cart?.totalAmount ?? dinnerTotal + optionsTotal + styleTotal;
+    const total = dinnerPrice + stylePrice + optionsTotal;
 
     const handleAddClick = () => {
         if (typeof window !== "undefined") {
@@ -367,9 +388,9 @@ export default function CartPage() {
                             <SectionTitle>Dinner</SectionTitle>
                             <ItemRow>
                                 <ItemName>{dinner.name}</ItemName>
-                                <ItemQty>{dinner.quantity}</ItemQty>
+                                <ItemQty>1</ItemQty>
                                 <ItemPrice>
-                                ₩{dinnerTotal.toLocaleString("ko-KR")}
+                                    ₩{dinnerPrice.toLocaleString("ko-KR")}
                                 </ItemPrice>
                             </ItemRow>
                         </Section>
@@ -378,15 +399,22 @@ export default function CartPage() {
 
                         <Section>
                             <SectionTitle>Option</SectionTitle>
-                            {options.map((item) => (
-                                <ItemRow key={item.optionId}>
-                                <ItemName>{item.name}</ItemName>
-                                <ItemQty>{item.defaultQty}</ItemQty>
-                                <ItemPrice>
-                                    ₩{(item.extraPrice * item.defaultQty).toLocaleString("ko-KR")}
-                                </ItemPrice>
-                                </ItemRow>
-                            ))}
+                            {options.map((item) => {
+                                const extraCount = Math.max(item.quantity - item.defaultQty, 0);
+                                const optionExtraPrice = calcOptionExtraPrice(item);
+
+                                return (
+                                    <ItemRow key={item.optionId}>
+                                        <ItemName>{item.name}</ItemName>
+                                        {/* 선택 수량 */}
+                                        <ItemQty>{item.quantity}</ItemQty>
+                                        {/* 추가 금액 */}
+                                        <ItemPrice>
+                                            ₩{optionExtraPrice.toLocaleString("ko-KR")}
+                                        </ItemPrice>
+                                    </ItemRow>
+                                );
+                            })}
                         </Section>
 
                         <Divider />
@@ -397,7 +425,7 @@ export default function CartPage() {
                                 <ItemName>{style.name}</ItemName>
                                 <ItemQty>1</ItemQty>
                                 <ItemPrice>
-                                ₩{styleTotal.toLocaleString("ko-KR")}
+                                    ₩{stylePrice.toLocaleString("ko-KR")}
                                 </ItemPrice>
                             </ItemRow>
                         </Section>

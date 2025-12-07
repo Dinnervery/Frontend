@@ -295,11 +295,6 @@ export default function StylePage() {
         const styleName = selectedStyle.backendName;
         const styleExtraPrice = selectedStyle.price;
 
-        if (!styleId) {
-            alert("선택한 스타일이 올바르지 않습니다.");
-            return;
-        }
-
         const body: CartItemRequest = {
             menuId: draft.menuId,
             menuName: draft.menuName,
@@ -308,10 +303,10 @@ export default function StylePage() {
             styleId,
             styleName,
             styleExtraPrice,
-            options: draft.options, 
+            options: draft.options,
         };
 
-        console.log("보내는 body >>>", body);
+        console.log("장바구니 담기 data", body);
         console.log(
             typeof body.menuId,
             typeof body.menuPrice,
