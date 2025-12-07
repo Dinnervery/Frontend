@@ -475,6 +475,30 @@ export default function DinnerPage() {
     const [ordersError, setOrdersError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const raw = localStorage.getItem(CART_DRAFT_KEY);
+        if (!raw) return;
+
+        try {
+            const draft = JSON.parse(raw) as { menuId?: number };
+
+            if (!draft.menuId) return;
+
+
+            const index = photos.findIndex(
+                (photo) => PHOTO_MENU_ID[photo.id] === draft.menuId
+            );
+
+            if (index !== -1) {
+                setActiveIndex(index);
+            }
+        } catch (e) {
+            console.error("cartDraft 파싱 실패:", e);
+        }
+    }, []);
+
+    useEffect(() => {
         const fetchOrders = async () => {
             try {
                 if (typeof window === "undefined") return;
@@ -532,7 +556,7 @@ export default function DinnerPage() {
     const router = useRouter();
     const positionOrder: PositionType[] = ["top", "right", "bottom", "left"];
 
-    const handleSelectDinner = async() => {
+    const handleSelectDinner = () => {
         if (!activeMenu) return;
 
         const draft: CartDraft = {
@@ -548,74 +572,12 @@ export default function DinnerPage() {
 
         localStorage.setItem(CART_DRAFT_KEY, JSON.stringify(draft));
         router.push(`/option?dinner=${currentPhoto.id}`);
-
-        try {
-            const body: CartItemRequest = {
-                menuId: activeMenu.menuId,
-                menuName: activeMenu.name,
-                menuPrice: activeMenu.price,
-                menuQuantity: 1,
-                styleId: 1, 
-                styleName: "SIMPLE",
-                styleExtraPrice: 0,
-                options: [], 
-            };
-
-            const cartItem = await addCartItem(body);
-            console.log("카트 응답:", cartItem);
-
-            router.push(`/option?dinner=${currentPhoto.id}`);
-        } catch (e) {
-            console.error(e);
-            alert("장바구니 추가 중 오류가 발생했습니다.");
-        }
     };
 
 
     const handlePrevOrderClick = () => {
         setPrevOrderActive((prev) => !prev); 
     };
-
-    async function addCartItem(
-        body: CartItemRequest
-    ): Promise<CartItemResponse> {
-        if (typeof window === "undefined") {
-            throw new Error("브라우저 환경이 아닙니다.");
-        }
-
-        const rawCustomerId =
-            localStorage.getItem("customerId") || localStorage.getItem("userId");
-        if (!rawCustomerId) {
-            throw new Error("로그인 정보가 없습니다.");
-        }
-
-        const customerId = Number(rawCustomerId);
-        if (Number.isNaN(customerId)) {
-            throw new Error("로그인 정보가 올바르지 않습니다.");
-        }
-
-        const token = localStorage.getItem("token");
-
-        const res = await fetch(`${API_URL}/cart/${customerId}/items`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token ?? ""}`,
-            },
-            credentials: "include",
-            body: JSON.stringify(body),
-        });
-
-        if (!res.ok) {
-            const text = await res.text();
-            console.error("장바구니 추가 실패:", res.status, text);
-            throw new Error("장바구니 추가 실패");
-        }
-
-        const data = (await res.json()) as CartItemResponse;
-        console.log("장바구니 추가 성공:", data);
-        return data;
-    }
 
     return (
         <Page>

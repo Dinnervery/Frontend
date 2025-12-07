@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Inter } from "next/font/google";
 import LogoutButton from "@/components/LogoutButton";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -223,21 +224,116 @@ const OrderButton = styled.button`
     }
 `;
 
-export default function InformationPage() {
-    const router = useRouter();
-    const dinner = { name: "잉글리시", qty: 1, price: 35000 };
-    const options = [
-        { name: "바게트", qty: 2, price: 3000 },
-        { name: "베이컨", qty: 1, price: 0 },
-        { name: "스테이크", qty: 1, price: 0 },
-        { name: "에그 스크램블", qty: 1, price: 0 },
-    ];
-    const style = { name: "그랜드", qty: 1, price: 5000 };
+// ========== API ==========
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-    const total =
-        dinner.price +
-        options.reduce((sum, o) => sum + o.price, 0) +
-        style.price;
+const CART_DRAFT_KEY = "cartDraft";
+
+type CartOption = {
+    optionId: number;
+    name: string;  
+    defaultQty: number;
+    extraPrice: number; 
+};
+
+type ServingStyle = {
+    servingStyleId: number;
+    name: string;
+    price: number;
+};
+
+type DinnerItem = {
+    menuId: number;
+    name: string;
+    quantity: number;
+    unitPrice: number;  
+    options: CartOption[];
+    servingStyle: ServingStyle;
+};
+
+type CartItem = {
+    cartItemId: number;
+    dinnerItem: DinnerItem;
+};
+
+type CartResponse = {
+    cartId: number;
+    customerId: number;
+    totalAmount: number;
+    cartItems: CartItem[];
+};
+
+export default function CartPage() {
+    const router = useRouter();
+    
+    const [cart, setCart] = useState<CartResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const firstItem = cart?.cartItems[0];
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const rawCustomerId = localStorage.getItem("customerId");
+        if (!rawCustomerId) {
+            alert("로그인 정보가 없습니다. 다시 로그인해주세요.");
+            router.push("/login");
+            return;
+        }
+
+        const fetchCart = async () => {
+            try {
+                const res = await fetch(`${API_URL}/cart/${rawCustomerId}`, {
+                    method: "GET",
+                    credentials: "include",
+                });
+
+                if (!res.ok) {
+                    throw new Error("장바구니 조회 실패");
+                }
+
+                const data: CartResponse = await res.json();
+                setCart(data);
+            } catch (e) {
+                console.error(e);
+                setError("장바구니를 불러오는 중 오류가 발생했습니다.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCart();
+    }, [router]);
+
+    if (loading) {
+        return <Page>로딩 중...</Page>;
+    }
+
+    if (error || !firstItem) {
+        return <Page>장바구니에 담긴 항목이 없습니다.</Page>;
+    }
+
+    const dinner = firstItem.dinnerItem;
+    const options = dinner.options || [];
+    const style = dinner.servingStyle;
+
+    const dinnerTotal = dinner.unitPrice * dinner.quantity;
+    const optionsTotal = options.reduce(
+        (sum, o) => sum + o.extraPrice * o.defaultQty,
+        0
+    );
+    const styleTotal = style.price ?? 0;
+
+    const total = cart?.totalAmount ?? dinnerTotal + optionsTotal + styleTotal;
+
+    const handleAddClick = () => {
+        if (typeof window !== "undefined") {
+            localStorage.removeItem(CART_DRAFT_KEY);
+        }
+        router.push("/dinner"); // 새 디너 선택
+    };
+
 
     return (
         <Page>
@@ -266,9 +362,9 @@ export default function InformationPage() {
                             <SectionTitle>Dinner</SectionTitle>
                             <ItemRow>
                                 <ItemName>{dinner.name}</ItemName>
-                                <ItemQty>{dinner.qty}</ItemQty>
+                                <ItemQty>{dinner.quantity}</ItemQty>
                                 <ItemPrice>
-                                ₩{dinner.price.toLocaleString("ko-KR")}
+                                ₩{dinnerTotal.toLocaleString("ko-KR")}
                                 </ItemPrice>
                             </ItemRow>
                         </Section>
@@ -278,11 +374,11 @@ export default function InformationPage() {
                         <Section>
                             <SectionTitle>Option</SectionTitle>
                             {options.map((item) => (
-                                <ItemRow key={item.name}>
+                                <ItemRow key={item.optionId}>
                                 <ItemName>{item.name}</ItemName>
-                                <ItemQty>{item.qty}</ItemQty>
+                                <ItemQty>{item.defaultQty}</ItemQty>
                                 <ItemPrice>
-                                    ₩{item.price.toLocaleString("ko-KR")}
+                                    ₩{(item.extraPrice * item.defaultQty).toLocaleString("ko-KR")}
                                 </ItemPrice>
                                 </ItemRow>
                             ))}
@@ -294,9 +390,9 @@ export default function InformationPage() {
                             <SectionTitle>Style</SectionTitle>
                             <ItemRow>
                                 <ItemName>{style.name}</ItemName>
-                                <ItemQty>{style.qty}</ItemQty>
+                                <ItemQty>1</ItemQty>
                                 <ItemPrice>
-                                ₩{style.price.toLocaleString("ko-KR")}
+                                ₩{styleTotal.toLocaleString("ko-KR")}
                                 </ItemPrice>
                             </ItemRow>
                         </Section>
@@ -312,7 +408,7 @@ export default function InformationPage() {
                     <AddButton
                             src="/I-add.png"
                             alt="추가"
-                            onClick={() => window.location.href = "/dinner"}
+                            onClick={handleAddClick}
                     />
                 </InnerContainer>
             </BoxContainer>
