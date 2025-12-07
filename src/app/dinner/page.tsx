@@ -271,7 +271,7 @@ const PrevOrderList = styled.div`
     margin-top: 12px;
 `;
 
-const PrevOrderItem = styled.div<{ $variant: "pink" | "brown" }>`
+const PrevOrderItem = styled.div<{ $variant: "pink" | "brown"; $disabled?: boolean }>`
     width: 100%;
     padding: 10px 14px 8px 14px;
 
@@ -279,9 +279,16 @@ const PrevOrderItem = styled.div<{ $variant: "pink" | "brown" }>`
     border: 2px solid
         ${(p) => (p.$variant === "pink" ? "#FFBFBE" : "#3F2316")};
     background: white;
+    cursor: ${(p) => (p.$disabled ? "default" : "pointer")};
+    transition: opacity 0.2s ease;
+    color: #3f2316;
+    opacity: ${(p) => (p.$disabled ? 0.6 : 1)};
 
     font-family: ${inter.style.fontFamily};
-    color: #3f2316;
+
+    &:hover {
+        background: ${(p) => (p.$disabled ? "white" : "#FDF5E6")};
+    }
 `;
 
 const EmptyState = styled.div`
@@ -378,6 +385,68 @@ const MENU_DESC: Record<number, string> = {
     4: "(2인) 바게트 4개,\n샴페인 1병, 스테이크,\n와인, 커피 1포트",
 };
 
+type Style = {
+    id: string;
+    backendId: number;
+    backendName: string;
+    name: string;
+    desc: string;
+    price: number;
+    src: string;
+    size: number;
+};
+
+const STYLES: Style[] = [
+    {
+        id: "simple",
+        backendId: 1,
+        backendName: "SIMPLE",
+        name: "심플 스타일",
+        desc: "플라스틱 접시/쟁반/컵/잔, 종이 냅킨",
+        price: 0,
+        src: "/S-simple.png",
+        size: 220,
+    },
+    {
+        id: "delux",
+        backendId: 3,
+        backendName: "DELUXE",
+        name: "디럭스 스타일",
+        desc: "꽃병, 도자기 접시/컵,\n나무 쟁반, 유리잔,\n린넨 냅킨",
+        price: 10000,
+        src: "/S-delux.png",
+        size: 240,
+    },
+    {
+        id: "grand",
+        backendId: 2,
+        backendName: "GRAND",
+        name: "그랜드 스타일",
+        desc: "도자기 접시/컵, 나무 쟁반, 플라스틱 잔, 면 냅킨",
+        price: 5000,
+        src: "/S-grand.png",
+        size: 240,
+    },
+];
+
+type OptionMeta = {
+    optionId: number;
+    name: string;
+    price: number;
+    defaultQty: number;
+};
+
+const OPTION_META: OptionMeta[] = [
+    { optionId: 1, name: "스테이크", price: 15000, defaultQty: 1 },
+    { optionId: 2, name: "와인", price: 8000, defaultQty: 1 },
+    { optionId: 3, name: "에그 스크램블", price: 5000, defaultQty: 1 },
+    { optionId: 4, name: "베이컨", price: 4000, defaultQty: 1 },
+    { optionId: 5, name: "바게트빵", price: 3000, defaultQty: 1 },
+    { optionId: 6, name: "커피", price: 5000, defaultQty: 1 },
+    { optionId: 7, name: "샐러드", price: 7000, defaultQty: 1 },
+    { optionId: 8, name: "샴페인", price: 25000, defaultQty: 1 },
+];
+
 type OrderStatus = "REQUESTED" | "COOKING" | "DELIVERING" | "COOKED" | "DONE";
 
 type OrderItemOption = {
@@ -433,16 +502,11 @@ type CartItemRequest = {
     options: CartItemOptionRequest[];
 };
 
-type CartItemOptionResponse = {
-    optionId: number;
-    name: string;
-    quantity: number;
-    unitPrice: number;
-};
-
 export default function DinnerPage() {
     const [activeIndex, setActiveIndex] = useState(0);
     const [prevOrderActive, setPrevOrderActive] = useState(false);
+    const [reorderLoadingId, setReorderLoadingId] = useState<number | null>(null);
+
 
     const menus = MENUS;
     const loading = false;
@@ -569,6 +633,110 @@ export default function DinnerPage() {
         setPrevOrderActive((prev) => !prev); 
     };
 
+    const handleReorder = async (order: Order) => {
+        try {
+            if (typeof window === "undefined") return;
+
+            const rawCustomerId =
+                localStorage.getItem("customerId") || localStorage.getItem("userId");
+
+            if (!rawCustomerId) {
+                alert("로그인 정보가 없습니다.");
+                return;
+            }
+
+            const customerId = Number(rawCustomerId);
+            if (Number.isNaN(customerId)) {
+                alert("로그인 정보가 올바르지 않습니다.");
+                return;
+            }
+
+            const token = localStorage.getItem("token");
+            if (!token) {
+                alert("토큰 정보가 없습니다. 다시 로그인해주세요.");
+                return;
+            }
+
+            if (!order.orderItems || order.orderItems.length === 0) {
+                alert("주문 정보에 상품이 없습니다.");
+                return;
+            }
+
+            const item = order.orderItems[0];
+
+            const menuMeta = MENUS.find((m) => m.name === item.name);
+            if (!menuMeta) {
+                console.error("메뉴 메타데이터를 찾을 수 없습니다:", item.name);
+                alert("해당 메뉴 정보를 찾을 수 없습니다.");
+                return;
+            }
+
+            const styleMeta = STYLES.find((s) => s.backendName === item.styleName);
+            if (!styleMeta) {
+                console.error("스타일 메타데이터를 찾을 수 없습니다:", item.styleName);
+                alert("해당 스타일 정보를 찾을 수 없습니다.");
+                return;
+            }
+
+            const optionPayloads: CartItemOptionRequest[] = (item.options || []).map((opt) => {
+                const meta = OPTION_META.find((m) => m.name === opt.name);
+                if (!meta) {
+                    console.warn("옵션 메타데이터를 찾을 수 없습니다:", opt.name);
+                    return null;
+                }
+
+                return {
+                    optionId: meta.optionId,
+                    optionName: meta.name,
+                    optionPrice: meta.price,
+                    defaultQty: meta.defaultQty,
+                    quantity: opt.quantity,
+                };
+            }).filter((o): o is CartItemOptionRequest => o !== null);
+
+            const payload: CartItemRequest = {
+                menuId: menuMeta.menuId,
+                menuName: menuMeta.name,
+                menuPrice: menuMeta.price,
+                menuQuantity: item.quantity,
+                styleId: styleMeta.backendId,
+                styleName: styleMeta.backendName,
+                styleExtraPrice: styleMeta.price,
+                options: optionPayloads,
+            };
+
+            console.log("재주문 payload:", payload);
+
+            setReorderLoadingId(order.orderId);
+
+            const res = await fetch(
+                `${API_URL}/cart/${customerId}/items`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                    credentials: "include",
+                }
+            );
+
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("재주문 실패 응답:", text);
+                throw new Error("재주문에 실패했습니다.");
+            }
+            setPrevOrderActive(false);
+            router.push("/cart");
+        } catch (e: any) {
+            console.error(e);
+            alert(e?.message ?? "재주문 중 오류가 발생했습니다.");
+        } finally {
+            setReorderLoadingId(null);
+        }
+    };
+
     return (
         <Page>
             <Overlay $active={prevOrderActive} onClick={() => setPrevOrderActive(false)} />
@@ -618,11 +786,22 @@ export default function DinnerPage() {
                         <PrevOrderList>
                         {orders.map((order) => {
                             const variant: "pink" | "brown" = order.status === "DONE" ? "brown" : "pink";
+                            const isLoading = reorderLoadingId === order.orderId;
+
                             return (
-                                <PrevOrderItem key={order.orderId} $variant={variant}>
+                                <PrevOrderItem
+                                    key={order.orderId}
+                                    $variant={variant}
+                                    $disabled={isLoading}
+                                    onClick={() => {
+                                        if (!isLoading) {
+                                            handleReorder(order);
+                                        }
+                                    }}
+                                >
                                     <ItemTopRow>
-                                    <ItemDate>{order.orderDate}</ItemDate>
-                                    <ItemPrice>₩{order.totalPrice.toLocaleString()}</ItemPrice>
+                                        <ItemDate>{order.orderDate}</ItemDate>
+                                        <ItemPrice>₩{order.totalPrice.toLocaleString()}</ItemPrice>
                                     </ItemTopRow>
 
                                     <ItemDesc>
@@ -643,8 +822,15 @@ export default function DinnerPage() {
                                                 }
                                                 return `${baseText}${styleText}`;
                                             })
-                                            .join("\n")}
-                                        </ItemDesc>
+                                            .join("\n")
+                                        }
+                                    </ItemDesc>
+
+                                    {isLoading && (
+                                        <ItemBottomRow>
+                                            <ItemStatus>재주문 중...</ItemStatus>
+                                        </ItemBottomRow>
+                                    )}
 
                                     {order.status === "DONE" && order.deliveryTime && (
                                     <ItemBottomRow>

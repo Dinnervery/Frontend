@@ -292,7 +292,7 @@ export default function StylePage() {
 
         const selectedStyle = STYLES[activeIndex];
         const styleId = selectedStyle.backendId;
-        const styleName = selectedStyle.backendName;
+        const styleName = selectedStyle.name;
         const styleExtraPrice = selectedStyle.price;
 
         const body: CartItemRequest = {

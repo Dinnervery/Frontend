@@ -199,7 +199,7 @@ const OPTION_ID_MAP: Record<string, number> = {
     "샴페인": 8,
 };
 
-const optionItemsByDinner: Record<DinnerId, OptionItem[]> = {
+const optionItems: Record<DinnerId, OptionItem[]> = {
     valen: [
         { id: "steak", src: "/O-steak.png", alt: "steak", name: "스테이크", price: 15000 },
         { id: "wine", src: "/O-wine.png", alt: "wine", name: "와인", price: 8000 },
@@ -251,7 +251,7 @@ export default function OptionPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const dinner = (searchParams.get("dinner") ?? "") as DinnerId;
-    const items = optionItemsByDinner[dinner] ?? [];
+    const items = optionItems[dinner] ?? [];
 
     const [qtyById, setQtyById] = useState<Record<string, number>>({});
     const [selectedOption, setSelectedOption] = useState<Record<string, boolean>>({});
