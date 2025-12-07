@@ -188,6 +188,10 @@ const StepCircle = styled.button<{ $active: boolean; $done: boolean }>`
     font-size: 20px;
     font-weight: bold;
     font-family: "SOYO";
+
+    &:disabled {
+        cursor: default;
+    }
 `;
 
 const StepLabel = styled.span`
@@ -330,9 +334,11 @@ type OrderItem = {
     styleName: string;
 };
 
+type OrderStatus = "REQUESTED" | "COOKING" | "COOKED";
+
 type Order = {
     orderId: number;
-    status: "REQUESTED" | "COOKING" | "DONE"; 
+    status: OrderStatus;
     deliveryTime: string;
     orderItems: OrderItem[];
 };
@@ -347,6 +353,7 @@ export default function CookingStaffPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
 
     const [page, setPage] = useState(0);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -425,7 +432,7 @@ export default function CookingStaffPage() {
     const hasOrders = !loading && !error && orders.length > 0;
     const getStepFromStatus = (status: Order["status"] | undefined): Step => {
         if (status === "COOKING") return 2;
-        if (status === "DONE") return 3;
+        if (status === "COOKED") return 3;
         return 1;
     };
     const totalPages = hasOrders
@@ -437,6 +444,62 @@ export default function CookingStaffPage() {
               page * cardsPerPage + cardsPerPage
         )
         : [];
+
+    const updateOrderStatus = async (
+        orderId: number,
+        nextStatus: OrderStatus
+    ) => {
+        // 같은 상태면 호출 안 함
+        const current = orders.find((o) => o.orderId === orderId);
+        if (!current || current.status === nextStatus) return;
+
+        const token =
+            typeof window !== "undefined"
+                ? localStorage.getItem("staffToken")
+                : null;
+
+        if (!token) {
+            setError("로그인 정보가 없습니다.");
+            return;
+        }
+
+        try {
+            setUpdatingOrderId(orderId);
+
+            const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ status: nextStatus }),
+            });
+
+            const data: { orderId: number; status: OrderStatus } =
+                await res.json();
+
+            if (!res.ok) {
+                console.error("updateOrderStatus error:", data);
+                setError("주문 상태를 변경하지 못했습니다.");
+                return;
+            }
+
+            setError(null);
+
+            // 상태 업데이트
+            setOrders((prev) => {
+                const updated = prev.map((o) =>
+                                o.orderId === data.orderId ? { ...o, status: data.status } : o
+                );
+                return updated.filter((o) => o.status !== "COOKED");
+            });
+        } catch (e) {
+            console.error("update order status error:", e);
+            setError("주문 상태를 변경하지 못했습니다.");
+        } finally {
+            setUpdatingOrderId(null);
+        }
+    };
 
     const handleNextPage = () => {
         if (!hasOrders || totalPages <= 1 || isAnimating.current) return;
@@ -526,6 +589,8 @@ export default function CookingStaffPage() {
                                                 <StepCircle
                                                     $active={step === 1}
                                                     $done={step > 1}
+                                                    disabled={updatingOrderId === order.orderId || step > 1}
+                                                    onClick={() => updateOrderStatus(order.orderId, "REQUESTED")}
                                                 >
                                                     1
                                                 </StepCircle>
@@ -538,6 +603,8 @@ export default function CookingStaffPage() {
                                                 <StepCircle
                                                     $active={step === 2}
                                                     $done={step > 2}
+                                                    disabled={updatingOrderId === order.orderId || order.status === "COOKED"}
+                                                    onClick={() => updateOrderStatus(order.orderId, "COOKING")}
                                                 >
                                                     2
                                                 </StepCircle>
@@ -550,6 +617,8 @@ export default function CookingStaffPage() {
                                                 <StepCircle
                                                     $active={step === 3}
                                                     $done={false}
+                                                    disabled={updatingOrderId === order.orderId}
+                                                    onClick={() => updateOrderStatus(order.orderId, "COOKED")}
                                                 >
                                                     3
                                                 </StepCircle>
