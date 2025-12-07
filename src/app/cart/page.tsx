@@ -158,22 +158,6 @@ const InnerContainer = styled.div`
     align-items: center;
 `;
 
-const AddButton = styled.img`
-    position: absolute;
-    top: 50%;
-    left: 450px; 
-    transform: translateY(-50%);
-
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-    z-index: 2; 
-
-    &:hover {
-        opacity: 0.6;
-    }
-`;
-
 const InfoHeader = styled.div`
     display: flex;
     align-items: center;
@@ -268,8 +252,38 @@ const TotalAmount = styled.div`
     font-weight: 700;
 `;
 
+const ButtonRow = styled.div`
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+`;
+
+const AddButton = styled.button`
+    width: 200px;
+    height: 50px;
+
+    border: none;
+    border-radius: 7px;
+    background: #3F2316;
+    color: #FFFFFF;
+    box-shadow: 3px 3px 20px rgba(0, 0, 0, 0.15);
+
+    font-family: ${inter.style.fontFamily};
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+        background: white;
+        color: #2b1810;
+        border: 2px solid #2b1810;
+    }
+`;
+
 const OrderButton = styled.button`
-    width: 400px;
+    width: 200px;
     height: 50px;
 
     border: none;
@@ -284,8 +298,8 @@ const OrderButton = styled.button`
     cursor: pointer;
 
     &:hover {
-        background: #3F2316;
-        color: white;
+        background: white;
+        border: 2px solid #FFBFBE;
     }
 `;
 
@@ -576,15 +590,15 @@ export default function CartPage() {
                         })}
                     </BoxRow>
 
-                    <OrderButton onClick={() => router.push("/checkout")}>
-                        주문하기
-                    </OrderButton>
+                    <ButtonRow>
+                        <AddButton onClick={handleAddClick}>
+                            추가하기
+                        </AddButton>
 
-                    <AddButton
-                        src="/I-add.png"
-                        alt="추가"
-                        onClick={handleAddClick}
-                    />
+                        <OrderButton onClick={() => router.push("/checkout")}>
+                            주문하기
+                        </OrderButton>
+                    </ButtonRow>
                 </InnerContainer>
             </BoxContainer>
 
