@@ -479,6 +479,54 @@ export default function CartPage() {
         });
     };
 
+    const handleEditClick = async (cartItemId: number) => {
+        if (typeof window === "undefined") return;
+
+        const rawCustomerId = localStorage.getItem("customerId");
+        if (!rawCustomerId) {
+            alert("로그인 정보가 없습니다.");
+            router.push("/login");
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(`${API_URL}/cart/${rawCustomerId}/items`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token ?? ""}`,
+                },
+                credentials: "include",
+                body: JSON.stringify({ cartItemId }),
+            });
+
+            if (!res.ok) {
+                throw new Error("장바구니 아이템 삭제 실패");
+            }
+
+            const data: { message: string; remainingItemsCount: number } = await res.json();
+            console.log("아이템 삭제 결과:", data);
+
+            setCart((prev) =>
+                prev
+                    ? {
+                        ...prev,
+                        cartItems: prev.cartItems.filter(
+                            (item) => item.cartItemId !== cartItemId
+                        ),
+                    }
+                    : prev
+            );
+
+            router.push("/dinner");
+        } catch (e) {
+            console.error(e);
+            alert("장바구니 아이템 삭제 중 오류가 발생했습니다.");
+        }
+    };
+
     const calcOptionExtraPrice = (o: CartOption) => {
         const extraCount = Math.max(o.quantity - o.defaultQty, 0);
         return extraCount * o.unitPrice;
@@ -530,7 +578,7 @@ export default function CartPage() {
                                 <InfoBox key={cartItem.cartItemId}>
                                     <InfoHeader>
                                         <InfoTitle>주문 내역</InfoTitle>
-                                        <EditButton onClick={() => router.push("/dinner")}>
+                                        <EditButton onClick={() => handleEditClick(cartItem.cartItemId)}>
                                             수정하기
                                         </EditButton>
                                     </InfoHeader>
