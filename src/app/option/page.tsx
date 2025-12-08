@@ -356,6 +356,17 @@ function OptionPageInner() {
     const [selectedOption, setSelectedOption] = useState<Record<string, boolean>>({});
     const [activeBox, setActiveBox] = useState<string | null>(null);
 
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const hasDraft = !!localStorage.getItem(CART_DRAFT_KEY);
+        if (!hasDraft) {
+            setSelectedOption({});
+            setQtyById({});
+            setActiveBox(null);
+        }
+    }, []);
+
     const qty = (id: string) => qtyById[id] ?? 1;
 
     const inc = (id: string) => {

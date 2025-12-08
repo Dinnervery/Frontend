@@ -586,6 +586,16 @@ export default function DinnerPage() {
     useEffect(() => {
         if (typeof window === "undefined") return;
 
+        const hasDraft = !!localStorage.getItem(CART_DRAFT_KEY);
+        if (!hasDraft) {
+            setActiveIndex(0);
+            setAiMessage("");
+        }
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
         const raw = localStorage.getItem(CART_DRAFT_KEY);
         if (!raw) return;
 
@@ -1070,7 +1080,7 @@ export default function DinnerPage() {
             <BottomAiBar>
                 <BottomAiLabel>AI</BottomAiLabel>
                 <BottomAiText>
-                    {aiMessage || "마이크 버튼을 눌러, 원하는 디너를 말해주세요."}
+                    {aiMessage || "마이크 버튼을 눌러, 인사로 대화를 시작해보세요!"}
                 </BottomAiText>
             </BottomAiBar>
         </Page>

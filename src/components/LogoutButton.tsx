@@ -80,6 +80,9 @@ export default function LogoutButton({ color }: { color?: string }) {
             }
         }
         router.push("/login");
+        if (typeof window !== "undefined") {
+            window.location.href = "/login";
+        }
     };
 
     return (
