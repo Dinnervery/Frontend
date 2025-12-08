@@ -69,6 +69,6 @@
   </tr>
   <tr>
     <td>인프라</td>
-    <td>AWS EC2, Docker, Ngnix</td>
+    <td>NCP Server, Docker, Ngnix</td>
   </tr>
 </table>
