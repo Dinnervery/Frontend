@@ -311,9 +311,18 @@ function normalizeOptionName(raw: string): string {
 function parseOptionsFromReply(reply: string): { optionName: string; quantity: number }[] {
     if (!reply) return [];
 
-    const firstSentence = reply.split(/[.。]/)[0];
+    const sentences = reply
+        .split(/[.。!?]/)
+        .map((s) => s.trim())
+        .filter(Boolean);
 
-    const segments = firstSentence.split(",").map((s) => s.trim()).filter(Boolean);
+    const targetSentence =
+        sentences.find((s) => /\d+\s*[개잔병]/.test(s)) ?? reply;
+
+    const segments = targetSentence
+        .split(/[，,]/)
+        .map((s) => s.trim())
+        .filter(Boolean);
 
     const results: { optionName: string; quantity: number }[] = [];
 
