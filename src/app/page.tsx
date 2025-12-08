@@ -3,6 +3,7 @@
 import Image from "next/image";
 import styled from "@emotion/styled";
 import { useRouter } from "next/navigation";
+import { useMemo, useEffect, useState } from "react";
 
 const Text = styled.p`
   position: absolute;
@@ -105,6 +106,17 @@ export default function Home() {
     router.push("/login");
   };
 
+  const words = useMemo(() => ["남편", "아내", "엄마", "아버지", "친구"] as const, []);
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setIdx((prev) => (prev + 1) % words.length);
+    }, 1000);
+
+    return () => window.clearInterval(id);
+  }, [words.length]);
+
   return (
     <Page>
       <BgWrap aria-hidden>
@@ -125,7 +137,7 @@ export default function Home() {
 
       <Text>
         특별한 날에 집에서 편안히 보내면서{'\n'}
-        당신의 <Highlight>남편</Highlight>을 감동시켜라
+        당신의 <Highlight>{words[idx]}</Highlight>을 감동시켜라
       </Text>
 
       <BgShapeWrap>
