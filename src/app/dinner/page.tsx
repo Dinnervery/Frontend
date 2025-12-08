@@ -738,7 +738,13 @@ export default function DinnerPage() {
         if (summary.styleId != null || summary.styleName) {
             const styleMeta = STYLES.find((s) => {
                 if (summary.styleId != null) return s.backendId === summary.styleId;
-                if (summary.styleName) return s.backendName === summary.styleName;
+                if (summary.styleName){
+                    const styleName = summary.styleName;
+                    return (
+                        s.backendName === styleName ||
+                        s.name === styleName
+                    );
+                }
                 return false;
             });
 
@@ -845,7 +851,7 @@ export default function DinnerPage() {
                 return;
             }
 
-            const styleMeta = STYLES.find((s) => s.backendName === item.styleName);
+            const styleMeta = STYLES.find((s) => s.backendName === item.styleName || s.name === item.styleName);
             if (!styleMeta) {
                 console.error("스타일 메타데이터를 찾을 수 없습니다:", item.styleName);
                 alert("해당 스타일 정보를 찾을 수 없습니다.");
