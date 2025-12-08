@@ -221,7 +221,7 @@ const PrevOrderContainer = styled.div<{ $active: boolean }>`
     flex-direction: column;
     align-items: flex-end;
 
-    z-index: 10001;
+    z-index: 10002;
 `;
 
 const PrevOrderButton = styled.img`
@@ -359,7 +359,7 @@ const Overlay = styled.div<{ $active: boolean }>`
 
     transition: opacity 0.3s ease;
 
-    z-index: 1000; 
+    z-index: 10001; 
 `;
 
 const BottomAiBar = styled.div`
