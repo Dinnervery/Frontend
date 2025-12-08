@@ -543,7 +543,7 @@ export default function StylePage() {
             <BottomAiBar>
                 <BottomAiLabel>AI</BottomAiLabel>
                 <BottomAiText>
-                    {aiMessage || "원하는 스타일을 말해보세요."}
+                    {aiMessage || "원하는 스타일을 말해주세요."}
                 </BottomAiText>
             </BottomAiBar>
         </Page>
