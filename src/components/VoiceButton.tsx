@@ -54,6 +54,7 @@ type VoiceOrderButtonProps = {
     iconSize?: number;
     ariaLabel?: string;
     iconSrc?: string;
+    onUserText?: (text: string) => void;
 };
 
 export default function VoiceOrderButton({
@@ -63,6 +64,7 @@ export default function VoiceOrderButton({
     ariaLabel = "음성 주문",
     disabled,
     iconSize = 30,
+    onUserText,
 }: VoiceOrderButtonProps) {
     const [loading, setLoading] = useState(false);
 
@@ -136,6 +138,10 @@ export default function VoiceOrderButton({
         recognition.onresult = async (event: any) => {
             const text = event.results[0][0].transcript as string;
             console.log("음성 인식 결과:", text);
+
+            if (onUserText) {
+                onUserText(text);
+            }
 
             await sendTextToServer(text);
         };

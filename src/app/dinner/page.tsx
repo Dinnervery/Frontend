@@ -567,6 +567,7 @@ export default function DinnerPage() {
     const [activeIndex, setActiveIndex] = useState(0);
     const [prevOrderActive, setPrevOrderActive] = useState(false);
     const [reorderLoadingId, setReorderLoadingId] = useState<number | null>(null);
+    const [skipNextAiSelection, setSkipNextAiSelection] = useState(false);
 
     const menus = MENUS;
     const loading = false;
@@ -701,6 +702,11 @@ export default function DinnerPage() {
         }
 
         setAiMessage(result.reply ?? "");
+
+        if (skipNextAiSelection) {
+            setSkipNextAiSelection(false); 
+            return;
+        }
 
         const summaryRaw = result.orderSummary as AiOrderSummary | null;
 
@@ -1073,6 +1079,11 @@ export default function DinnerPage() {
                         onError={(msg) => alert(msg)}
                         iconSrc="/Voice.svg"
                         iconSize={45}
+                        onUserText={(text) => {
+                            if (text?.includes("추천")) {
+                                setSkipNextAiSelection(true);
+                            }
+                        }}
                     />
                 </ActionRow>
             </Card>
