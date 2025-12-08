@@ -69,9 +69,15 @@ export default function LogoutButton({ color }: { color?: string }) {
                 }
             }
             // 로컬 스토리지 정리
-            localStorage.removeItem("customerId");
-            localStorage.removeItem("token");
-            localStorage.removeItem(CART_DRAFT_KEY);
+            try {
+                localStorage.removeItem("customerId");
+                localStorage.removeItem("userId");      
+                localStorage.removeItem("token");
+
+                localStorage.removeItem(CART_DRAFT_KEY);
+            } catch (e) {
+                console.error("로그아웃 중 localStorage 정리 에러:", e);
+            }
         }
         router.push("/login");
     };
